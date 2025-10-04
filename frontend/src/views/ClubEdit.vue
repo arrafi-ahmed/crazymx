@@ -166,6 +166,7 @@ onMounted(async () => {
                 show-size
                 title="Update Logo"
                 variant="solo"
+                clearable
                 @update:model-value="handleLogoUpdate"
               />
 
