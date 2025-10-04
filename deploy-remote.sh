@@ -71,7 +71,36 @@ if ! command -v psql &> /dev/null; then
   systemctl start postgresql
 fi
 
-echo "5.0 Configuring PostgreSQL database and user..."
+echo "5.0 Installing GraphicsMagick/ImageMagick (if missing)..."
+# Check for GraphicsMagick first (preferred)
+if ! command -v gm &> /dev/null; then
+  echo "Installing GraphicsMagick..."
+  apt update
+  apt install -y graphicsmagick
+else
+  echo "✅ GraphicsMagick already installed."
+fi
+
+# Check for ImageMagick as fallback
+if ! command -v convert &> /dev/null; then
+  echo "Installing ImageMagick as fallback..."
+  apt update
+  apt install -y imagemagick
+else
+  echo "✅ ImageMagick already installed."
+fi
+
+# Verify installation
+if command -v gm &> /dev/null; then
+  echo "✅ GraphicsMagick is available: $(gm version | head -n1)"
+elif command -v convert &> /dev/null; then
+  echo "✅ ImageMagick is available: $(convert -version | head -n1)"
+else
+  echo "❌ Neither GraphicsMagick nor ImageMagick could be installed!"
+  exit 1
+fi
+
+echo "6.0 Configuring PostgreSQL database and user..."
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1; then
   sudo -u postgres psql -c "CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$DB_PASS';"
 fi
@@ -109,20 +138,20 @@ EOF
 
 sudo -u postgres psql -d "$DB_NAME" -c "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO $DB_USER WITH GRANT OPTION;"
 
-echo "6.0 Cloning repo into $GLOBAL_CLONE_DIR..."
+echo "7.0 Cloning repo into $GLOBAL_CLONE_DIR..."
 rm -rf "$GLOBAL_CLONE_DIR"
 git clone "$REPO_URL" "$GLOBAL_CLONE_DIR"
 
 # === FRONTEND DEPLOYMENT ===
-echo "7.0 Frontend Deployment ($FRONTEND_DOMAIN) as $FRONTEND_SITE_USER..."
+echo "8.0 Frontend Deployment ($FRONTEND_DOMAIN) as $FRONTEND_SITE_USER..."
 
 mkdir -p "$FRONTEND_SITE_DIR"
-echo "7.1 Copying frontend source and environment file..."
+echo "8.1 Copying frontend source and environment file..."
 rm -rf "$FRONTEND_SITE_DIR/frontend"
 cp -r "$GLOBAL_CLONE_DIR/frontend" "$FRONTEND_SITE_DIR/"
 cp "$REMOTE_FRONTEND_ENV" "$FRONTEND_SITE_DIR/frontend/.env.production"
 
-echo "7.2 Building frontend..."
+echo "8.2 Building frontend..."
 cd "$FRONTEND_SITE_DIR/frontend"
 npm cache clean --force
 NODE_ENV=development npm install
@@ -130,44 +159,44 @@ NODE_ENV=production npm run build
 
 echo "✅ Frontend build complete."
 
-echo "7.3 Deploying built frontend files to $FRONTEND_SITE_DIR..."
+echo "8.3 Deploying built frontend files to $FRONTEND_SITE_DIR..."
 DIST_DIR="$FRONTEND_SITE_DIR/frontend/dist"
 echo "Cleaning up old frontend deployment (excluding ./frontend)..."
 find "$FRONTEND_SITE_DIR" -mindepth 1 -path "$FRONTEND_SITE_DIR/frontend" -prune -o -exec rm -rf {} +
 cp -r "$DIST_DIR"/* "$FRONTEND_SITE_DIR/"
 
-echo "7.4 Setting ownership and permissions for frontend files..."
+echo "8.4 Setting ownership and permissions for frontend files..."
 chown -R "$FRONTEND_SITE_USER:$FRONTEND_SITE_USER" "$FRONTEND_SITE_DIR"
 find "$FRONTEND_SITE_DIR" -type d -exec chmod 755 {} \;
 find "$FRONTEND_SITE_DIR" -type f -exec chmod 644 {} \;
 chmod 600 "$FRONTEND_SITE_DIR/frontend/.env.production"
 
 # === BACKEND DEPLOYMENT ===
-echo "8.0 Backend Deployment ($BACKEND_DOMAIN) as $BACKEND_SITE_USER..."
+echo "9.0 Backend Deployment ($BACKEND_DOMAIN) as $BACKEND_SITE_USER..."
 
 mkdir -p "$BACKEND_SITE_DIR"
 
-echo "8.1 Preserving backend public folder if exists..."
+echo "9.1 Preserving backend public folder if exists..."
 if [ -d "$BACKEND_SITE_DIR/backend/public" ] && [ "$(ls -A $BACKEND_SITE_DIR/backend/public 2>/dev/null)" ]; then
   mv "$BACKEND_SITE_DIR/backend/public" "$BACKEND_SITE_DIR/public_backup"
 fi
 
-echo "8.2 Copying backend source and environment file..."
+echo "9.2 Copying backend source and environment file..."
 rm -rf "$BACKEND_SITE_DIR/backend"
 cp -r "$GLOBAL_CLONE_DIR/backend" "$BACKEND_SITE_DIR/"
 cp "$REMOTE_BACKEND_ENV" "$BACKEND_SITE_DIR/backend/.env.production"
 
 cd "$BACKEND_SITE_DIR/backend"
-echo "8.3 Installing backend dependencies..."
+echo "9.3 Installing backend dependencies..."
 npm install
 
-echo "8.4 Restoring public folder if backed up..."
+echo "9.4 Restoring public folder if backed up..."
 if [ -d "$BACKEND_SITE_DIR/public_backup" ]; then
   rm -rf "$BACKEND_SITE_DIR/backend/public"
   mv "$BACKEND_SITE_DIR/public_backup" "$BACKEND_SITE_DIR/backend/public"
 fi
 
-echo "8.5 Creating PM2 ecosystem config..."
+echo "9.5 Creating PM2 ecosystem config..."
 cat <<EOF > "$BACKEND_SITE_DIR/backend/ecosystem.config.js"
 module.exports = {
   apps: [{
@@ -188,17 +217,17 @@ module.exports = {
 };
 EOF
 
-echo " 8.6 Creating PM2 logs dir..."
+echo "9.6 Creating PM2 logs dir..."
 mkdir -p "$BACKEND_SITE_DIR/backend/logs"
 
-echo "8.7 Setting ownership and permissions for backend files..."
+echo "9.7 Setting ownership and permissions for backend files..."
 chown -R "$BACKEND_SITE_USER:$BACKEND_SITE_USER" "$BACKEND_SITE_DIR"
 find "$BACKEND_SITE_DIR" -type d -exec chmod 755 {} \;
 find "$BACKEND_SITE_DIR" -type f -exec chmod 644 {} \;
 chmod 600 "$BACKEND_SITE_DIR/backend/.env.production"
 chmod -R o+rX "$GLOBAL_CLONE_DIR/backend"
 
-echo "8.8 PM2 setup to run on boot..."
+echo "9.8 PM2 setup to run on boot..."
 
 for svc_user in "$BACKEND_SITE_USER" root; do
   if systemctl list-units --all | grep -q "pm2-$svc_user.service"; then
@@ -222,11 +251,11 @@ else
   exit 1
 fi
 
-echo "8.9 Starting backend with PM2..."
+echo "9.9 Starting backend with PM2..."
 sudo -u "$BACKEND_SITE_USER" pm2 start "$BACKEND_SITE_DIR/backend/ecosystem.config.js" --env production || sudo -u "$BACKEND_SITE_USER" pm2 restart "$PROJECT_NAME-api"
 sudo -u "$BACKEND_SITE_USER" pm2 save
 
-echo "9.0 Running DB schema migration if present..."
+echo "10.0 Running DB schema migration if present..."
 if [ -f "$GLOBAL_CLONE_DIR/backend/schema-pg.sql" ]; then
   chown postgres:postgres "$GLOBAL_CLONE_DIR/backend/schema-pg.sql"
   chmod 600 "$GLOBAL_CLONE_DIR/backend/schema-pg.sql"
@@ -237,7 +266,7 @@ if [ -f "$GLOBAL_CLONE_DIR/backend/schema-pg.sql" ]; then
   sudo -u postgres psql -d "$DB_NAME" -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO $DB_USER;"
 fi
 
-echo "10.0 Cleaning up temporary files..."
+echo "11.0 Cleaning up temporary files..."
 rm -rf "$GLOBAL_CLONE_DIR"
 rm -f "$ROOT_DIR/deploy-remote.sh" "$REMOTE_FRONTEND_ENV" "$REMOTE_BACKEND_ENV"
 rm -rf "$FRONTEND_SITE_DIR/frontend"
