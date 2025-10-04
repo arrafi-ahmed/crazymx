@@ -1,0 +1,293 @@
+<script setup>
+import { reactive, ref, watch } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { generateSlug, isValidImage, toLocalISOString } from '@/others/util'
+import { useDisplay } from 'vuetify'
+import PageTitle from '@/components/PageTitle.vue'
+
+const { xs } = useDisplay()
+const router = useRouter()
+const store = useStore()
+
+const newEventInit = {
+  name: null,
+  description: null,
+  location: null,
+  dateRange: [new Date(), new Date()],
+  banner: null,
+  slug: null,
+  currency: 'USD',
+  landingConfig: {
+    heroTitle: 'Building a Sustainable Future Through the Peaceism Ecosystem',
+    heroSubtitle:
+      'Join global leaders in advancing sustainable development and peace through actionable strategies.',
+    overviewTitle: 'What is Peaceism?',
+    overviewDescription:
+      'The Peaceism Expo & Conference is a global gathering of leaders, innovators, and change-makers committed to building a more sustainable and peaceful world.',
+    enableLandingPage: true,
+    tax: { type: 'percent', amount: 0 },
+  },
+  clubId: null,
+  createdBy: null,
+}
+const newEvent = reactive({ ...newEventInit })
+
+const form = ref(null)
+const isFormValid = ref(true)
+
+const handleEventBanner = (file) => {
+  newEvent.banner = file
+}
+
+// Watch for title changes and auto-generate slug if slug field is empty
+watch(
+  () => newEvent.name,
+  (newTitle) => {
+    if (newTitle && !newEvent.slug) {
+      newEvent.slug = generateSlug(newTitle)
+    }
+  },
+)
+
+const handleAddEvent = async () => {
+  await form.value.validate()
+  if (!isFormValid.value) return
+
+  // Auto-generate slug if empty
+  if (!newEvent.slug || newEvent.slug.trim() === '') {
+    newEvent.slug = generateSlug(newEvent.name)
+  }
+
+  const formData = new FormData()
+  formData.append('name', newEvent.name)
+  formData.append('description', newEvent.description)
+  formData.append('location', newEvent.location)
+  formData.append('startDate', toLocalISOString(newEvent.dateRange[0]).slice(0, 10))
+  formData.append(
+    'endDate',
+    toLocalISOString(newEvent.dateRange[newEvent.dateRange.length - 1]).slice(0, 10),
+  )
+  formData.append('slug', newEvent.slug)
+  formData.append('currency', newEvent.currency)
+  formData.append('landingConfig', JSON.stringify(newEvent.landingConfig))
+
+  if (newEvent.banner) formData.append('files', newEvent.banner)
+
+  store.dispatch('event/save', formData).then((result) => {
+    // newEvent = {...newEvent, ...newEventInit}
+    Object.assign(newEvent, {
+      ...newEventInit,
+    })
+    router.push({
+      name: 'dashboard-admin',
+    })
+  })
+}
+</script>
+
+<template>
+  <v-container class="event-add-container">
+    <!-- Header Section -->
+    <v-row class="mb-6">
+      <v-col cols="12">
+        <PageTitle
+          subtitle="Set up your event details and configuration"
+          title="Create New Event"
+        />
+      </v-col>
+    </v-row>
+
+    <v-row>
+      <v-col cols="12" lg="8" xl="6">
+        <v-card class="form-card" elevation="4">
+          <v-card-text class="pa-6">
+            <v-form ref="form" v-model="isFormValid" fast-fail @submit.prevent="handleAddEvent">
+              <v-text-field
+                v-model="newEvent.name"
+                :rules="[(v) => !!v || 'Name is required!']"
+                class="mb-4"
+                clearable
+                density="comfortable"
+                hide-details="auto"
+                label="Event Name"
+                prepend-inner-icon="mdi-format-title"
+                required
+                variant="solo"
+              />
+
+              <v-textarea
+                v-model="newEvent.description"
+                class="mb-4"
+                clearable
+                density="comfortable"
+                hide-details="auto"
+                label="Description (optional)"
+                prepend-inner-icon="mdi-text-box"
+                rows="3"
+                variant="solo"
+              />
+
+              <v-text-field
+                v-model="newEvent.location"
+                class="mb-4"
+                clearable
+                density="comfortable"
+                hide-details="auto"
+                label="Location (optional)"
+                prepend-inner-icon="mdi-map-marker"
+                variant="solo"
+              />
+
+              <v-select
+                v-model="newEvent.currency"
+                :items="[
+                  { value: 'USD', text: 'USD ($)' },
+                  { value: 'EUR', text: 'EUR (€)' },
+                  { value: 'GBP', text: 'GBP (£)' },
+                ]"
+                class="mb-4"
+                density="comfortable"
+                hide-details="auto"
+                item-title="text"
+                item-value="value"
+                label="Currency"
+                prepend-inner-icon="mdi-cash-multiple"
+                variant="solo"
+              />
+
+              <v-text-field
+                v-model="newEvent.slug"
+                :disabled="!newEvent.name"
+                append-inner-icon="mdi-refresh"
+                class="mb-4"
+                clearable
+                density="comfortable"
+                hide-details="auto"
+                hint="Custom URL for your event (e.g., 'peaceism-conference-2024'). Leave empty to auto-generate from event name."
+                label="URL Slug (optional)"
+                persistent-hint
+                prepend-inner-icon="mdi-link"
+                variant="solo"
+                @click:append-inner="newEvent.slug = generateSlug(newEvent.name)"
+              />
+
+              <v-date-input
+                v-model="newEvent.dateRange"
+                :rules="[
+                  (v) => !!v || 'Date range is required!',
+                  (v) =>
+                    (v && Array.isArray(v) && v.length >= 2) ||
+                    'Please select both start and end dates',
+                  (v) =>
+                    (v && Array.isArray(v) && v.length >= 2 && v[0] <= v[v.length - 1]) ||
+                    'Start date must be before end date',
+                ]"
+                class="mb-4"
+                color="primary"
+                label="Event Date"
+                multiple="range"
+                prepend-icon=""
+                prepend-inner-icon="mdi-calendar"
+                show-adjacent-months
+                hide-details="auto"
+                variant="solo"
+              />
+              <v-row class=" mb-4" no-gutters>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="newEvent.landingConfig.tax.type"
+                    :items="[
+                      { value: 'percent', text: 'Percentage %' },
+                      { value: 'fixed', text: 'Fixed amount' },
+                    ]"
+                    density="comfortable"
+                    hide-details="auto"
+                    item-title="text"
+                    item-value="value"
+                    label="Tax Type"
+                    prepend-inner-icon="mdi-percent"
+                    variant="solo"
+                  />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model.number="newEvent.landingConfig.tax.amount"
+                    :hint="
+                      newEvent.landingConfig.tax.type === 'percent'
+                        ? 'Enter percent (e.g., 5 for 5%)'
+                        : 'Enter fixed tax in cents'
+                    "
+                    class="mb-2"
+                    density="comfortable"
+                    hide-details="auto"
+                    label="Tax Amount"
+                    prepend-inner-icon="mdi-currency-usd"
+                    type="number"
+                    variant="solo"
+                  />
+                </v-col>
+              </v-row>
+              <v-file-upload
+                :rules="[
+                  (v) =>
+                    (Array.isArray(v) ? v : [v]).every((file) => isValidImage(file)) ||
+                    'Only jpg/jpeg/png allowed!',
+                ]"
+                accept="image/*"
+                class="mb-4"
+                density="compact"
+                rounded
+                show-size
+                title="Event Banner"
+                variant="solo"
+                @update:model-value="handleEventBanner"
+              />
+
+              <v-divider class="my-6" />
+              <div class="d-flex justify-end">
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-plus"
+                  size="large"
+                  type="submit"
+                  variant="elevated"
+                >
+                  Create
+                </v-btn>
+              </div>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<style scoped>
+.event-add-container {
+  min-height: calc(100vh - 64px);
+  padding: 24px;
+}
+
+.form-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .event-add-container {
+    padding: 16px;
+  }
+
+  .d-flex.gap-4 {
+    flex-direction: column;
+    gap: 16px !important;
+  }
+}
+</style>
