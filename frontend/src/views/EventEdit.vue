@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { generateSlug, getEventImageUrl, toLocalISOString } from '@/others/util'
 import { useDisplay } from 'vuetify'
 import PageTitle from '@/components/PageTitle.vue'
+import ImageManager from '@/components/ImageManager.vue'
 
 const { xs } = useDisplay()
 const route = useRoute()
@@ -300,31 +301,6 @@ onMounted(async () => {
                 variant="solo"
               />
 
-              <ImageManager
-                v-if="event?.banner && event.banner !== 'null' && event.banner.trim() !== ''"
-                :src="getEventImageUrl(event.banner, 'Event')"
-                @delete="handleBannerDelete"
-              />
-
-              <v-file-upload
-                :rules="[
-                  (v) =>
-                    !v ||
-                    (Array.isArray(v) ? v : [v]).every((file) => isValidImage(file)) ||
-                    'Only jpg/jpeg/png allowed!',
-                ]"
-                accept="image/*"
-                class="mb-4"
-                density="compact"
-                rounded
-                show-size
-                title="Update Banner"
-                variant="solo"
-                @update:model-value="handleBannerUpdate"
-              />
-
-              <v-divider class="my-6" />
-              <div class="text-subtitle-1 mb-2">Tax</div>
               <v-row>
                 <v-col cols="12" md="6">
                   <v-select
@@ -345,7 +321,6 @@ onMounted(async () => {
                 <v-col cols="12" md="6">
                   <v-text-field
                     v-model.number="newEvent.landingConfig.tax.amount"
-                    :hint="newEvent.landingConfig.tax.type === 'percent' ? 'Enter percent (e.g., 5 for 5%)' : 'Enter fixed tax in cents'"
                     class="mb-2"
                     density="comfortable"
                     hide-details="auto"
@@ -356,6 +331,25 @@ onMounted(async () => {
                   />
                 </v-col>
               </v-row>
+
+              <ImageManager
+                v-if="event?.banner && event.banner !== 'null' && event.banner.trim() !== ''"
+                :src="getEventImageUrl(event.banner, 'Event')"
+                class="mt-2 mt-md-4"
+                @delete="handleBannerDelete"
+              />
+
+              <v-file-upload
+                accept="image/*"
+                class="mt-2 mt-md-4"
+                density="compact"
+                rounded
+                show-size
+                title="Update Banner"
+                variant="solo"
+                clearable
+                @update:model-value="handleBannerUpdate"
+              />
 
               <!-- Landing Page Configuration -->
               <!--              <v-expansion-panels class="mb-6">-->

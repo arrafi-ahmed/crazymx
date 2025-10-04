@@ -127,28 +127,31 @@ onMounted(async () => {
             <div class="d-flex flex-wrap gap-3 mb-4">
               <v-btn
                 :to="{ name: 'event-edit', params: { eventId: item.id } }"
-                class="px-3"
+                class="px-2"
                 color="primary"
                 prepend-icon="mdi-pencil"
                 variant="tonal"
+                density="comfortable"
               >
                 Edit
               </v-btn>
               <v-btn
                 :to="{ name: 'event-attendees', params: { eventId: item.id } }"
-                class="px-3 ml-1"
+                class="px-2 ml-1"
                 color="success"
                 prepend-icon="mdi-account-multiple"
                 variant="tonal"
+                density="comfortable"
               >
                 Attendees
               </v-btn>
               <v-btn
                 :to="{ name: 'event-tickets', params: { eventId: item.id } }"
-                class="px-3 ml-1"
+                class="px-2 ml-1"
                 color="info"
                 prepend-icon="mdi-ticket"
                 variant="tonal"
+                density="comfortable"
               >
                 Tickets
               </v-btn>

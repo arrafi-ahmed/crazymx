@@ -241,6 +241,7 @@ const handleAddEvent = async () => {
                 show-size
                 title="Event Banner"
                 variant="solo"
+                clearable
                 @update:model-value="handleEventBanner"
               />
 
