@@ -20,24 +20,18 @@ const event = computed(() =>
 
 const newEventInit = {
   id: null,
-  name: null,
-  description: null,
-  location: null,
+  name: '',
+  description: '',
+  location: '',
   dateRange: [new Date(), new Date()],
-  banner: null,
-  slug: null,
-  currency: 'USD',
-  landingConfig: {
-    heroTitle: '',
-    heroSubtitle: '',
-    overviewTitle: '',
-    overviewDescription: '',
-    enableLandingPage: true,
-    tax: { type: 'percent', amount: 0 },
-  },
-  clubId: null,
-  createdBy: null,
-  rmImage: null,
+  banner: '',
+  slug: '',
+  currency: '',
+  clubId: '',
+  createdBy: '',
+  landingConfig:{},
+  taxType: 'percent',
+  taxAmount: 0,
 }
 const newEvent = reactive({ ...newEventInit })
 
@@ -302,7 +296,10 @@ onMounted(async () => {
               />
 
               <v-row>
-                <v-col cols="12" md="6">
+                <v-col
+                  cols="12"
+                  md="6"
+                >
                   <v-select
                     v-model="newEvent.landingConfig.tax.type"
                     :items="[
@@ -318,7 +315,10 @@ onMounted(async () => {
                     variant="solo"
                   />
                 </v-col>
-                <v-col cols="12" md="6">
+                <v-col
+                  cols="12"
+                  md="6"
+                >
                   <v-text-field
                     v-model.number="newEvent.landingConfig.tax.amount"
                     class="mb-2"

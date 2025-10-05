@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed, onMounted, ref } from 'vue'
-import { getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
+import { getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
 
 const router = useRouter()
 const store = useStore()
@@ -15,37 +15,33 @@ const upcomingEvents = ref([])
 const events = computed(() => store.state.event.events)
 const currentUser = computed(() => store.getters['auth/getCurrentUser'])
 
-// Default event image
-const defaultEventImage =
-  getClientPublicImageUrl('default-event2.jpeg')
-
 // Format event data for display
 const formatEventData = (events) => {
   return events
     .map((event) => ({
       id: event.id,
       title: event.name,
-      date: new Date(event.start_date).toLocaleDateString('en-US', {
+      date: new Date(event.startDate).toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       }),
-      time: new Date(event.start_date).toLocaleTimeString('en-US', {
+      time: new Date(event.startDate).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
       }),
       location: event.location || 'Cathedral Venue',
-      description: event.description || 'Join us for an inspiring musical experience.',
-      image: event.banner
-        ? getClientPublicImageUrl(event.banner, 'event-banner')
-        : defaultEventImage,
+      description: event.description === 'null' ? '' : event.description,
+      banner: event.banner
+        ? getApiPublicImageUrl(event.banner, 'event-banner')
+        : getClientPublicImageUrl('default-event2.jpeg'),
       slug: event.slug,
       isFree: true, // Assuming cathedral events are free
-      requiresReservation: true,
-      startDate: event.start_date,
-      endDate: event.end_date,
+      registrationCount: event.registrationCount,
+      startDate: event.startDate,
+      endDate: event.endDate,
     }))
     .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
 }
@@ -130,77 +126,85 @@ onMounted(() => {
         </div>
 
         <!-- Events Grid -->
-        <div
+        <v-row
           v-else
           class="events-grid"
+          justify="center"
         >
-          <div
+          <v-col
             v-for="event in upcomingEvents"
             :key="event.id"
-            class="event-card"
-            @click="navigateToEvent(event)"
+            cols="12"
+            sm="10"
+            md="6"
+            lg="4"
+            class="event-col"
           >
-            <div class="event-image">
-              <img
-                :src="event.image"
-                :alt="event.title"
-              >
-              <div
-                v-if="event.isFree"
-                class="event-badge"
-              >
-                Free Event
-              </div>
-            </div>
-            <div class="event-content">
-              <h3 class="event-title">
-                {{ event.title }}
-              </h3>
-              <div class="event-meta">
-                <div class="event-date">
-                  <v-icon
-                    size="16"
-                    color="primary"
-                  >
-                    mdi-calendar
-                  </v-icon>
-                  <span>{{ event.date }}</span>
-                </div>
-                <div class="event-time">
-                  <v-icon
-                    size="16"
-                    color="primary"
-                  >
-                    mdi-clock
-                  </v-icon>
-                  <span>{{ event.time }}</span>
-                </div>
-                <div class="event-location">
-                  <v-icon
-                    size="16"
-                    color="primary"
-                  >
-                    mdi-map-marker
-                  </v-icon>
-                  <span>{{ event.location }}</span>
-                </div>
-              </div>
-              <p class="event-description">
-                {{ event.description }}
-              </p>
-              <div class="event-actions">
-                <v-btn
-                  color="secondary"
-                  size="small"
-                  variant="flat"
-                  class="event-btn"
+            <div
+              class="event-card"
+              @click="navigateToEvent(event)"
+            >
+              <div class="event-image">
+                <img
+                  :src="event.banner"
+                  :alt="event.title"
                 >
-                  {{ event.requiresReservation ? 'Reserve Now' : 'Learn More' }}
-                </v-btn>
+                <div
+                  v-if="event.isFree"
+                  class="event-badge"
+                >
+                  {{ event.registrationCount }} registered
+                </div>
+              </div>
+              <div class="event-content">
+                <h3 class="event-title">
+                  {{ event.title }}
+                </h3>
+                <div class="event-meta">
+                  <div class="event-date">
+                    <v-icon
+                      size="16"
+                      color="primary"
+                    >
+                      mdi-calendar
+                    </v-icon>
+                    <span>{{ event.date }}</span>
+                  </div>
+                  <div class="event-time">
+                    <v-icon
+                      size="16"
+                      color="primary"
+                    >
+                      mdi-clock
+                    </v-icon>
+                    <span>{{ event.time }}</span>
+                  </div>
+                  <div class="event-location">
+                    <v-icon
+                      size="16"
+                      color="primary"
+                    >
+                      mdi-map-marker
+                    </v-icon>
+                    <span>{{ event.location }}</span>
+                  </div>
+                </div>
+                <p class="event-description">
+                  {{ event.description }}
+                </p>
+                <div class="event-actions">
+                  <v-btn
+                    color="secondary"
+                    variant="flat"
+                    class="event-btn"
+                  >
+                    Reserve Now
+                  </v-btn>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </v-col>
+        </v-row>
 
         <!-- No Events State -->
         <div
@@ -264,7 +268,7 @@ onMounted(() => {
           </div>
           <div class="about-image">
             <img
-              src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&q=80"
+              :src="getClientPublicImageUrl('default-event2.jpeg')"
               alt="Cathedral Concert"
             >
           </div>
@@ -414,8 +418,6 @@ onMounted(() => {
 }
 
 .events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 32px;
   max-width: 1200px;
   margin: 0 auto;
@@ -429,8 +431,9 @@ onMounted(() => {
   transition: all 0.3s ease;
   cursor: pointer;
   border: 1px solid #e9ecef;
-  max-width: 400px;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .event-card:hover {
@@ -469,6 +472,9 @@ onMounted(() => {
 
 .event-content {
   padding: 24px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .event-title {
@@ -506,6 +512,7 @@ onMounted(() => {
 .event-actions {
   display: flex;
   justify-content: flex-end;
+  margin-top: auto;
 }
 
 .event-btn {
@@ -693,7 +700,6 @@ onMounted(() => {
   }
 
   .events-grid {
-    grid-template-columns: 1fr;
     gap: 24px;
   }
 

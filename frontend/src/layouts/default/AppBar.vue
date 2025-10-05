@@ -196,14 +196,14 @@ const goBack = () => {
     :order="1"
     class="modern-app-bar bg-transparent"
     color="transparent"
-    :height="isScrolled?60:130"
+    :height="isScrolled ? 60 : 130"
     elevation="0"
   >
     <div class="app-bar-container bg-transparent justify-center">
       <!-- User Menu -->
       <v-btn
         v-if="signedin"
-        size="large"
+        :size="isScrolled?'default':'large'"
         icon="mdi-menu"
         style="z-index: 9999999 !important"
         color="white"
@@ -215,7 +215,7 @@ const goBack = () => {
       <v-spacer />
       <div
         class="logo-container rounded-lg"
-        :class="{'bg-accent': !isScrolled}"
+        :class="{ 'bg-accent': !isScrolled }"
         style="z-index: 1 !important"
         @click="handleLogoClick"
       >
@@ -426,7 +426,7 @@ const goBack = () => {
   max-width: 260px;
 }
 
-.v-toolbar--collapse img{
+.v-toolbar--collapse img {
   display: none;
   max-width: 0;
   max-height: 0;

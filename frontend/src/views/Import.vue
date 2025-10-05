@@ -56,8 +56,7 @@ const handleAttendeeImport = async () => {
           max-width="700"
           rounded="lg"
         >
-          <v-card-title class="text-center font-weight-bold">
-          </v-card-title>
+          <v-card-title class="text-center font-weight-bold" />
           <!--          <v-card-subtitle-->
           <!--            class="text-center v-icon&#45;&#45;clickable text-decoration-underline"-->
           <!--            @click="attendeeImportDialog = !attendeeImportDialog"-->

@@ -71,7 +71,7 @@ const selectTicket = (ticket, quantityChange = 1) => {
     // Update existing selection
     const currentQuantity = selectedTickets.value[existingIndex].quantity
     const newQuantity = currentQuantity + quantityChange
-    
+
     if (newQuantity <= 0) {
       // Remove from cart if quantity becomes 0 or negative
       selectedTickets.value.splice(existingIndex, 1)
@@ -240,25 +240,25 @@ onMounted(async () => {
       </v-row>
 
       <!-- Instructions -->
-<!--      <div-->
-<!--        v-if="tickets.length > 0"-->
-<!--        class="text-center mb-6"-->
-<!--      >-->
-<!--        <v-alert-->
-<!--          color="primary"-->
-<!--          variant="tonal"-->
-<!--          class="mx-auto"-->
-<!--          max-width="600"-->
-<!--          density="compact"-->
-<!--        >-->
-<!--          <template #prepend>-->
-<!--            <v-icon>mdi-information</v-icon>-->
-<!--          </template>-->
-<!--          <div class="text-body-2">-->
-<!--            <strong>How to reserve:</strong> Click "Add to Cart" on your desired ticket, then use the button below to proceed to registration.-->
-<!--          </div>-->
-<!--        </v-alert>-->
-<!--      </div>-->
+      <!--      <div-->
+      <!--        v-if="tickets.length > 0"-->
+      <!--        class="text-center mb-6"-->
+      <!--      >-->
+      <!--        <v-alert-->
+      <!--          color="primary"-->
+      <!--          variant="tonal"-->
+      <!--          class="mx-auto"-->
+      <!--          max-width="600"-->
+      <!--          density="compact"-->
+      <!--        >-->
+      <!--          <template #prepend>-->
+      <!--            <v-icon>mdi-information</v-icon>-->
+      <!--          </template>-->
+      <!--          <div class="text-body-2">-->
+      <!--            <strong>How to reserve:</strong> Click "Add to Cart" on your desired ticket, then use the button below to proceed to registration.-->
+      <!--          </div>-->
+      <!--        </v-alert>-->
+      <!--      </div>-->
 
       <v-row v-if="isLoading">
         <v-col
@@ -382,7 +382,7 @@ onMounted(async () => {
                     Max: {{ ticket.currentStock || 0 }}
                   </span>
                 </div>
-                
+
                 <div class="d-flex align-center justify-center gap-2">
                   <v-btn
                     :disabled="!ticket.currentStock || ticket.currentStock <= 0"
@@ -393,13 +393,15 @@ onMounted(async () => {
                     variant="outlined"
                     @click="selectTicket(ticket, -1)"
                   >
-                    <v-icon size="16">mdi-minus</v-icon>
+                    <v-icon size="16">
+                      mdi-minus
+                    </v-icon>
                   </v-btn>
-                  
+
                   <div class="quantity-display">
                     {{ isTicketInCart(ticket.id) ? selectedTickets.find(item => item.ticketId === ticket.id)?.quantity || 0 : 0 }}
                   </div>
-                  
+
                   <v-btn
                     :disabled="!ticket.currentStock || ticket.currentStock <= 0 || (isTicketInCart(ticket.id) && selectedTickets.find(item => item.ticketId === ticket.id)?.quantity >= ticket.currentStock)"
                     class="quantity-btn"
@@ -409,7 +411,9 @@ onMounted(async () => {
                     variant="outlined"
                     @click="selectTicket(ticket, 1)"
                   >
-                    <v-icon size="16">mdi-plus</v-icon>
+                    <v-icon size="16">
+                      mdi-plus
+                    </v-icon>
                   </v-btn>
                 </div>
               </div>
@@ -425,10 +429,12 @@ onMounted(async () => {
                   size="default"
                   @click="selectTicket(ticket, 1)"
                 >
-                  <v-icon class="mr-2">mdi-cart-plus</v-icon>
+                  <v-icon class="mr-2">
+                    mdi-cart-plus
+                  </v-icon>
                   Add to Cart
                 </v-btn>
-                
+
                 <v-btn
                   v-else
                   :disabled="!ticket.currentStock || ticket.currentStock <= 0"
@@ -438,7 +444,9 @@ onMounted(async () => {
                   size="default"
                   @click="removeTicket(ticket.id)"
                 >
-                  <v-icon class="mr-2">mdi-cart-remove</v-icon>
+                  <v-icon class="mr-2">
+                    mdi-cart-remove
+                  </v-icon>
                   Remove from Cart
                 </v-btn>
               </div>
@@ -492,7 +500,7 @@ onMounted(async () => {
               </v-icon>
               Cart
             </v-btn>
-              <v-btn
+            <v-btn
               :disabled="selectedTickets.length === 0"
               :loading="isProcessingPayment"
               class="continue-btn"
@@ -677,7 +685,10 @@ onMounted(async () => {
               <span class="summary-label">Subtotal</span>
               <span class="summary-amount">{{ formatPrice(getSubtotalAmount(), eventCurrency) }}</span>
             </div>
-            <div v-if="getTaxAmount() > 0" class="summary-line">
+            <div
+              v-if="getTaxAmount() > 0"
+              class="summary-line"
+            >
               <span class="summary-label">Tax</span>
               <span class="summary-amount">{{ formatPrice(getTaxAmount(), eventCurrency) }}</span>
             </div>

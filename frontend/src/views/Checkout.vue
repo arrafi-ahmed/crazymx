@@ -373,14 +373,25 @@ onMounted(async () => {
                     {{ formatPrice(subtotalAmount, eventCurrency) }}
                   </div>
                 </div>
-                <div class="d-flex justify-space-between align-center mt-2" v-if="taxAmount > 0">
-                  <div class="text-body-2">Tax</div>
-                  <div class="text-body-2">{{ formatPrice(taxAmount, eventCurrency) }}</div>
+                <div
+                  v-if="taxAmount > 0"
+                  class="d-flex justify-space-between align-center mt-2"
+                >
+                  <div class="text-body-2">
+                    Tax
+                  </div>
+                  <div class="text-body-2">
+                    {{ formatPrice(taxAmount, eventCurrency) }}
+                  </div>
                 </div>
                 <v-divider class="my-3" />
                 <div class="d-flex justify-space-between align-center">
-                  <div class="text-h6 font-weight-bold">Total</div>
-                  <div class="text-h6 font-weight-bold">{{ formatPrice(totalAmount, eventCurrency) }}</div>
+                  <div class="text-h6 font-weight-bold">
+                    Total
+                  </div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatPrice(totalAmount, eventCurrency) }}
+                  </div>
                 </div>
 
                 <!-- Attendee Info -->

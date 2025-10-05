@@ -11,25 +11,18 @@ const router = useRouter()
 const store = useStore()
 
 const newEventInit = {
-  name: null,
-  description: null,
-  location: null,
+  name: '',
+  description: '',
+  location: '',
   dateRange: [new Date(), new Date()],
-  banner: null,
-  slug: null,
-  currency: 'USD',
-  landingConfig: {
-    heroTitle: 'Building a Sustainable Future Through the Peaceism Ecosystem',
-    heroSubtitle:
-      'Join global leaders in advancing sustainable development and peace through actionable strategies.',
-    overviewTitle: 'What is Peaceism?',
-    overviewDescription:
-      'The Peaceism Expo & Conference is a global gathering of leaders, innovators, and change-makers committed to building a more sustainable and peaceful world.',
-    enableLandingPage: true,
-    tax: { type: 'percent', amount: 0 },
-  },
-  clubId: null,
-  createdBy: null,
+  banner: '',
+  slug: '',
+  currency: '',
+  clubId: '',
+  createdBy: '',
+  landingConfig:{},
+  taxType: 'percent',
+  taxAmount: 0,
 }
 const newEvent = reactive({ ...newEventInit })
 
@@ -99,10 +92,22 @@ const handleAddEvent = async () => {
     </v-row>
 
     <v-row>
-      <v-col cols="12" lg="8" xl="6">
-        <v-card class="form-card" elevation="4">
+      <v-col
+        cols="12"
+        lg="8"
+        xl="6"
+      >
+        <v-card
+          class="form-card"
+          elevation="4"
+        >
           <v-card-text class="pa-6">
-            <v-form ref="form" v-model="isFormValid" fast-fail @submit.prevent="handleAddEvent">
+            <v-form
+              ref="form"
+              v-model="isFormValid"
+              fast-fail
+              @submit.prevent="handleAddEvent"
+            >
               <v-text-field
                 v-model="newEvent.name"
                 :rules="[(v) => !!v || 'Name is required!']"
@@ -193,10 +198,16 @@ const handleAddEvent = async () => {
                 hide-details="auto"
                 variant="solo"
               />
-              <v-row class=" mb-4" no-gutters>
-                <v-col cols="12" md="6">
+              <v-row
+                class=" mb-4"
+                no-gutters
+              >
+                <v-col
+                  cols="12"
+                  md="6"
+                >
                   <v-select
-                    v-model="newEvent.landingConfig.tax.type"
+                    v-model="newEvent.taxType"
                     :items="[
                       { value: 'percent', text: 'Percentage %' },
                       { value: 'fixed', text: 'Fixed amount' },
@@ -210,9 +221,12 @@ const handleAddEvent = async () => {
                     variant="solo"
                   />
                 </v-col>
-                <v-col cols="12" md="6">
+                <v-col
+                  cols="12"
+                  md="6"
+                >
                   <v-text-field
-                    v-model.number="newEvent.landingConfig.tax.amount"
+                    v-model.number="newEvent.taxAmount"
                     :hint="
                       newEvent.landingConfig.tax.type === 'percent'
                         ? 'Enter percent (e.g., 5 for 5%)'
