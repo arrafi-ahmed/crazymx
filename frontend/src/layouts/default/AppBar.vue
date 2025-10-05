@@ -196,7 +196,7 @@ const goBack = () => {
     :order="1"
     class="modern-app-bar bg-transparent"
     color="transparent"
-    height="130"
+    :height="isScrolled?60:130"
     elevation="0"
   >
     <div class="app-bar-container bg-transparent justify-center">
