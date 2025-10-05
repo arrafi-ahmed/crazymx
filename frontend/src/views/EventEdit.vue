@@ -29,7 +29,7 @@ const newEventInit = {
   currency: '',
   clubId: '',
   createdBy: '',
-  landingConfig:{},
+  landingConfig: {},
   taxType: 'percent',
   taxAmount: 0,
 }
@@ -98,11 +98,16 @@ const handleSubmitEditEvent = async () => {
   })
 }
 const fetchData = async () => {
-  if (!event.value?.id) {
-    await store.dispatch('event/setEventByEventIdnClubId', {
-      eventId: route.params.eventId,
-      clubId: currentUser.value.clubId,
-    })
+  if (!event.value?.id && route.params.eventId) {
+    try {
+      await store.dispatch('event/setEventByEventIdnClubId', {
+        eventId: route.params.eventId,
+        clubId: currentUser.value?.clubId,
+      })
+    } catch (error) {
+      console.error('Error fetching event data:', error)
+      throw error
+    }
   }
 }
 // Helper function to safely parse dates
@@ -118,37 +123,43 @@ const parseDate = (dateValue) => {
 }
 
 onMounted(async () => {
-  await fetchData()
-  // Wait for event data to be available
-  if (event.value && event.value.id) {
-    Object.assign(newEvent, {
-      ...event.value,
-      banner: null,
-      dateRange: [parseDate(event.value.startDate), parseDate(event.value.endDate)],
-    })
-  } else {
-    // If event data is not available, try to fetch it again
-    await store.dispatch('event/setEvent', {
-      eventId: route.params.eventId,
-    })
+  try {
+    await fetchData()
 
-    if (store.state.event.event && store.state.event.event.id) {
+    // Wait for event data to be available
+    if (event.value && event.value.id) {
       Object.assign(newEvent, {
-        ...store.state.event.event,
-        banner: null,
-        dateRange: [
-          parseDate(store.state.event.event.startDate),
-          parseDate(store.state.event.event.endDate),
-        ],
+        ...event.value,
+        dateRange: [parseDate(event.value.startDate), parseDate(event.value.endDate)],
       })
     } else {
-      // If still no event found, redirect to dashboard
-      router.push({ name: 'dashboard-admin' })
-      return
-    }
-  }
+      // If event data is not available, try to fetch it once more
+      await store.dispatch('event/setEvent', {
+        eventId: route.params.eventId,
+      })
 
-  isLoading.value = false
+      if (store.state.event.event && store.state.event.event.id) {
+        Object.assign(newEvent, {
+          ...store.state.event.event,
+          dateRange: [
+            parseDate(store.state.event.event.startDate),
+            parseDate(store.state.event.event.endDate),
+          ],
+        })
+      } else {
+        // If still no event found, redirect to dashboard
+        console.error('Event not found:', route.params.eventId)
+        router.push({ name: 'dashboard-admin' })
+        return
+      }
+    }
+  } catch (error) {
+    console.error('Error loading event:', error)
+    router.push({ name: 'dashboard-admin' })
+    return
+  } finally {
+    isLoading.value = false
+  }
 })
 </script>
 
@@ -295,13 +306,13 @@ onMounted(async () => {
                 variant="solo"
               />
 
-              <v-row>
+              <v-row class="mt-n8 mb-2">
                 <v-col
                   cols="12"
                   md="6"
                 >
                   <v-select
-                    v-model="newEvent.landingConfig.tax.type"
+                    v-model="newEvent.taxType"
                     :items="[
                       { value: 'percent', text: 'Percentage %' },
                       { value: 'fixed', text: 'Fixed amount' },
@@ -320,8 +331,7 @@ onMounted(async () => {
                   md="6"
                 >
                   <v-text-field
-                    v-model.number="newEvent.landingConfig.tax.amount"
-                    class="mb-2"
+                    v-model.number="newEvent.taxAmount"
                     density="comfortable"
                     hide-details="auto"
                     label="Tax Amount"

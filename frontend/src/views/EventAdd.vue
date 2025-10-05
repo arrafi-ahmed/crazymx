@@ -227,11 +227,6 @@ const handleAddEvent = async () => {
                 >
                   <v-text-field
                     v-model.number="newEvent.taxAmount"
-                    :hint="
-                      newEvent.landingConfig.tax.type === 'percent'
-                        ? 'Enter percent (e.g., 5 for 5%)'
-                        : 'Enter fixed tax in cents'
-                    "
                     class="mb-2"
                     density="comfortable"
                     hide-details="auto"
