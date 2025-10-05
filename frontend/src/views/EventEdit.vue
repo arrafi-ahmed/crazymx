@@ -32,6 +32,7 @@ const newEventInit = {
   landingConfig: {},
   taxType: 'percent',
   taxAmount: 0,
+  rmImage: '',
 }
 const newEvent = reactive({ ...newEventInit })
 
@@ -277,7 +278,7 @@ onMounted(async () => {
                 clearable
                 density="comfortable"
                 hide-details="auto"
-                hint="Custom URL for your event (e.g., 'peaceism-conference-2024'). Leave empty to auto-generate from event name."
+                hint="Custom URL for your event (e.g., 'conference-2024'). Leave empty to auto-generate from event name."
                 label="URL Slug (optional)"
                 persistent-hint
                 prepend-inner-icon="mdi-link"

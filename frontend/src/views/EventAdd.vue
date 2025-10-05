@@ -238,11 +238,6 @@ const handleAddEvent = async () => {
                 </v-col>
               </v-row>
               <v-file-upload
-                :rules="[
-                  (v) =>
-                    (Array.isArray(v) ? v : [v]).every((file) => isValidImage(file)) ||
-                    'Only jpg/jpeg/png allowed!',
-                ]"
                 accept="image/*"
                 class="mb-4"
                 density="compact"

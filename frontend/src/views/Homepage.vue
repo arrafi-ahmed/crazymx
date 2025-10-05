@@ -38,7 +38,6 @@ const formatEventData = (events) => {
         ? getApiPublicImageUrl(event.banner, 'event-banner')
         : getClientPublicImageUrl('default-event2.jpeg'),
       slug: event.slug,
-      isFree: true, // Assuming cathedral events are free
       registrationCount: event.registrationCount,
       startDate: event.startDate,
       endDate: event.endDate,
@@ -150,7 +149,6 @@ onMounted(() => {
                   :alt="event.title"
                 >
                 <div
-                  v-if="event.isFree"
                   class="event-badge"
                 >
                   {{ event.registrationCount }} registered
