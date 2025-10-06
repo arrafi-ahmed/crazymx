@@ -3,15 +3,14 @@ import $axios from '@/plugins/axios'
 export const namespaced = true
 
 export const state = {
-  events: JSON.parse(localStorage.getItem('events')) || [],
-  event: JSON.parse(localStorage.getItem('currentEvent')) || {},
+  events: [],
+  event: {},
   extras: [],
 }
 
 export const mutations = {
   setEvents(state, payload) {
     state.events = payload
-    localStorage.setItem('events', JSON.stringify(payload))
   },
   setEvent(state, payload) {
     state.event = payload
@@ -152,6 +151,32 @@ export const actions = {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/save', request)
+        .then((response) => {
+          commit('saveEvent', response.data?.payload)
+          resolve(response)
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    })
+  },
+  saveConfig({ commit }, request) {
+    return new Promise((resolve, reject) => {
+      $axios
+        .post('/event/saveConfig', request)
+        .then((response) => {
+          commit('saveEvent', response.data?.payload)
+          resolve(response)
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    })
+  },
+  saveLandingConfig({ commit }, request) {
+    return new Promise((resolve, reject) => {
+      $axios
+        .post('/event/saveLandingConfig', request)
         .then((response) => {
           commit('saveEvent', response.data?.payload)
           resolve(response)

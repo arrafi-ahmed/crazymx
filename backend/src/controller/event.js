@@ -29,6 +29,38 @@ router.post(
     },
 );
 
+router.post(
+    "/saveConfig",
+    auth,
+    async (req, res, next) => {
+        try {
+            const result = await eventService.saveConfig({
+                payload: req.body,
+                currentUser: req.currentUser,
+            });
+            res.status(200).json(new ApiResponse("Configuration saved!", result));
+        } catch (err) {
+            next(err);
+        }
+    },
+);
+
+router.post(
+    "/saveLandingConfig",
+    auth,
+    async (req, res, next) => {
+        try {
+            const result = await eventService.saveLandingConfig({
+                payload: req.body,
+                currentUser: req.currentUser,
+            });
+            res.status(200).json(new ApiResponse("Landing configuration saved!", result));
+        } catch (err) {
+            next(err);
+        }
+    },
+);
+
 router.post("/saveExtras", auth, isAdminEventAuthor, async (req, res, next) => {
     try {
         const results = await eventService.saveExtras({payload: req.body});

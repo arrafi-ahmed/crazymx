@@ -126,44 +126,59 @@ exports.getCheckinStats = async ({eventId}) => {
     };
 };
 
-exports.validateQrCode = async ({registrationId, attendeeId, qrUuid}) => {
-    if (!registrationId || !attendeeId || !qrUuid) {
+// Minimal single-query validation: verifies event match, registration active, QR match, and not already checked-in
+exports.validateQrCode = async ({registrationId, attendeeId, qrUuid, eventId}) => {
+    if (!registrationId || !attendeeId || !qrUuid || !eventId) {
         throw new CustomError("Invalid QR Code", 400);
     }
 
-    // Get attendee with registration validation using all three IDs
-    const attendee = await attendeesService.getAttendeeByIdRegistrationAndQrUuid({
-        registrationId,
-        attendeeId,
-        qrUuid,
-    });
+    const sql = `
+        SELECT 
+            a.id                                        AS attendee_id,
+            a.first_name,
+            a.last_name,
+            a.email,
+            a.phone,
+            t.title                                     AS ticket_title,
+            r.id                                        AS registration_id,
+            a.qr_uuid,
+            r.status                                    AS registration_status,
+            r.event_id,
+            (CASE WHEN c.attendee_id IS NULL THEN 0 ELSE 1 END) AS is_checked_in
+        FROM attendees a
+        JOIN registration r           ON a.registration_id = r.id
+        LEFT JOIN ticket t            ON a.ticket_id = t.id
+        LEFT JOIN checkin c           ON c.attendee_id = a.id
+        WHERE r.id = $1
+          AND r.event_id = $2
+          AND r.status = true
+          AND a.id = $3
+          AND a.qr_uuid = $4
+        LIMIT 1
+    `;
 
-    if (!attendee) {
+    const result = await query(sql, [registrationId, eventId, attendeeId, qrUuid]);
+    const row = result.rows?.[0];
+
+    if (!row) {
         throw new CustomError("Invalid QR Code", 401);
     }
 
-    // Validate registration status
-    if (attendee.registrationStatus !== true) {
-        throw new CustomError(
-            "Registration not active - cannot check in",
-            401,
-            attendee,
-        );
+    if (Number(row.isCheckedIn) > 0) {
+        throw new CustomError("Already checked-in", 401);
     }
 
-    // Check if already checked in
-    const checkinSql = `
-        SELECT COUNT(*) as checkin_count
-        FROM checkin
-        WHERE attendee_id = $1
-    `;
-    const checkinResult = await query(checkinSql, [attendee.id]);
-
-    if (checkinResult.rows[0].checkinCount > 0) {
-        throw new CustomError("Already checked-in", 401, attendee);
-    }
-
-    return attendee;
+    return {
+        id: row.attendeeId,
+        registrationId: row.registrationId,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        email: row.email,
+        phone: row.phone,
+        ticketTitle: row.ticketTitle,
+        qrUuid: row.qrUuid,
+        registrationStatus: row.registrationStatus,
+    };
 };
 
 const badgeTemplatePath = path.join(
@@ -198,14 +213,15 @@ exports.scanByRegistrationId = async ({qrCodeData, eventId, userId}) => {
         throw new CustomError("Invalid QR code", 400);
     }
 
-    // Validate QR code using all three IDs for maximum security
+    // Minimal single validation query (includes event match and check-in status)
     const attendee = await exports.validateQrCode({
         registrationId,
         attendeeId,
         qrUuid,
+        eventId,
     });
 
-    // Create a check-in record
+    // Create a check-in record (idempotent: if already has checkin id we would have thrown above)
     const newCheckin = {
         attendeeId: attendee.id,
         registrationId: attendee.registrationId,
@@ -213,15 +229,20 @@ exports.scanByRegistrationId = async ({qrCodeData, eventId, userId}) => {
     };
     const checkinRecord = await exports.save({newCheckin});
 
+    // Compute total attendees from orders.items for this registration
+    const totalSql = `
+        SELECT COALESCE(SUM((item->>'quantity')::int), 0) AS total_attendees
+        FROM orders o
+                 CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+        WHERE o.registration_id = $1
+    `;
+    const totalResult = await query(totalSql, [attendee.registrationId]);
+    const totalAttendees = totalResult.rows?.[0]?.totalAttendees || 0;
+
     return {
         ...attendee,
         checkinTime: checkinRecord.createdAt,
-        attendee: {
-            firstName: attendee.firstName,
-            lastName: attendee.lastName,
-            email: attendee.email,
-            ticketTitle: attendee.ticketTitle,
-        },
+        totalAttendees
     };
 };
 

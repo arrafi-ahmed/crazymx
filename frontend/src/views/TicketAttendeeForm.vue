@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import $axios from '@/plugins/axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { toast } from 'vue-sonner'
@@ -16,12 +17,15 @@ const attendeeForm = ref(null)
 const isFormValid = ref(true)
 
 const tickets = computed(() => store.state.ticket.tickets || [])
+const eventConfig = ref(null)
+// Default to true (multi-attendee) unless explicitly set to false
+const saveAllAttendeesDetails = computed(() => eventConfig.value?.saveAllAttendeesDetails !== false)
 const selectedTickets = computed(() => JSON.parse(localStorage.getItem('selectedTickets')) || [])
 const attendees = ref()
 const totalAttendees = computed(() => {
+  if (!saveAllAttendeesDetails.value) return 1
   return selectedTickets.value.reduce((sum, ticket) => {
     const quantity = ticket.quantity || 1
-
     return sum + quantity
   }, 0)
 })
@@ -72,6 +76,24 @@ function handleSelectTicket(ticketId) {
   attendee.title = ticketTitleById(ticketId)
 }
 
+// Auto-select first available ticket for current attendee if none selected
+function autoSelectFirstAvailableForCurrentStep() {
+  const idx = currentStep.value
+  const currentAttendee = attendees.value?.[idx]
+  if (!currentAttendee) return
+
+  if (!currentAttendee.ticketId) {
+    const options = getAvailableTicketsForAttendee(
+      attendees.value,
+      selectedTickets.value,
+      idx
+    )
+    if (options.length > 0) {
+      handleSelectTicket(options[0].value)
+    }
+  }
+}
+
 const nextStep = async () => {
   if (attendeeForm.value) {
     await attendeeForm.value.validate()
@@ -83,6 +105,7 @@ const nextStep = async () => {
   if (currentStep.value < totalAttendees.value - 1) {
     currentStep.value++
     attendees.value[currentStep.value] = new Attendee({ ...attendees.value[currentStep.value] })
+    autoSelectFirstAvailableForCurrentStep()
   } else {
     proceedToCheckout()
   }
@@ -154,12 +177,27 @@ const initializeData = async () => {
     title: null,
   }))
 
+  // Fetch event config by slug to determine saveAllAttendeesDetails
+  try {
+    const response = await $axios.get(`/event/getEventBySlug`, { params: { slug: route.params.slug } })
+    eventConfig.value = response.data?.payload?.config || {}
+  } catch (e) {
+    // Keep default behavior (multi-attendee) if config fails to load
+    eventConfig.value = eventConfig.value || {}
+  }
+
   isDataReady.value = true
+  autoSelectFirstAvailableForCurrentStep()
 }
 
 // Initialize when component mounts
 onMounted(async () => {
   await initializeData()
+})
+
+// Also react when the user navigates between attendees
+watch(currentStep, () => {
+  autoSelectFirstAvailableForCurrentStep()
 })
 </script>
 
@@ -192,8 +230,12 @@ onMounted(async () => {
             cols="12"
             md="8"
           >
+            <div class="text-h5 font-weight-bold mb-4 text-center">
+              {{ store.state.event.event?.name }}
+            </div>
             <!-- Progress Indicator -->
             <v-card
+              v-if="saveAllAttendeesDetails"
               class="mb-6"
               elevation="2"
             >
@@ -216,8 +258,7 @@ onMounted(async () => {
             <v-card elevation="4">
               <v-card-title class="bg-primary text-white py-4">
                 <h3 class="text-h5 font-weight-bold">
-                  Attendee {{ currentStep + 1 }}:
-                  {{ ticketTitleById(attendees[currentStep].ticketId) || 'Select Ticket Type' }}
+                  {{ saveAllAttendeesDetails ? `Attendee ${currentStep + 1}: ${ticketTitleById(attendees[currentStep].ticketId) || 'Select Ticket Type'}` : 'Attendee Details' }}
                 </h3>
               </v-card-title>
 
@@ -227,7 +268,7 @@ onMounted(async () => {
                   v-model="isFormValid"
                   @submit.prevent="nextStep"
                 >
-                  <v-row>
+                  <v-row v-if="saveAllAttendeesDetails">
                     <v-col cols="12">
                       <v-select
                         v-model="attendees[currentStep].ticketId"

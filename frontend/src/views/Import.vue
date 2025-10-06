@@ -39,7 +39,7 @@ const handleAttendeeImport = async () => {
     <v-row class="mb-6">
       <v-col cols="12">
         <PageTitle
-          subtitle="Import attendee data from Excel files"
+          :subtitle="store.state.event.event?.name || 'Import attendee data from Excel files'"
           title="Import"
         />
       </v-col>

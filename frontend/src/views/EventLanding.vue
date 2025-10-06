@@ -1,5 +1,5 @@
 <script setup>
-import { getApiPublicImageUrl, getClientPublicImageUrl } from '@/others/util'
+import { getApiPublicImageUrl, getClientPublicImageUrl, formatDate, formatDateTime } from '@/others/util'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useStore } from 'vuex'
@@ -29,6 +29,25 @@ const heroBackgroundStyle = computed(() => {
   return {
     background: `url('${getClientPublicImageUrl('default-event2.jpeg')}') center/cover no-repeat`,
   }
+})
+
+// Hero subtitle: "{{datetime}} — at {{location}}."
+const eventDateSubtitle = computed(() => {
+  const start = event.value?.startDate
+  const end = event.value?.endDate
+  const loc = event.value?.location || 'TBA'
+  const isSingleDay = event.value?.config?.isSingleDayEvent === true
+
+  if (start && end) {
+    if (isSingleDay) return `${formatDate(start)} — at ${loc}.`
+    const sameDay = new Date(start).toDateString() === new Date(end).toDateString()
+    const datePart = sameDay ? `${formatDate(start)}` : `${formatDate(start)} - ${formatDate(end)}`
+    return `${datePart} — at ${loc}.`
+  }
+  if (start) {
+    return `${formatDate(start)} — at ${loc}.`
+  }
+  return `Date TBA — at ${loc}.`
 })
 
 const attendeeInit = ref({
@@ -135,7 +154,7 @@ onMounted(() => {
               {{ event?.name || 'Event Registration' }}
             </h1>
             <p class="hero-subtitle">
-              Join us for an amazing experience
+              {{ eventDateSubtitle }}
             </p>
           </div>
         </div>

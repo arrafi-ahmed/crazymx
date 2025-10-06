@@ -121,6 +121,17 @@ exports.sendTicketByAttendeeId = async ({attendeeId}) => {
         });
     }
 
+    const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+    const sameDay = event?.startDate && event?.endDate
+        ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
+        : false;
+    const eventDateDisplay = (() => {
+        if (!event?.startDate && !event?.endDate) return 'Date TBA';
+        if ((isSingleDay || sameDay) && event?.startDate) return formatDateToMonDD(event.startDate);
+        if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
+        return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+    })();
+
     const html = compileTicketTemplate({
         eventName: event.name,
         name: `${attendee.firstName} ${attendee.lastName}`,
@@ -128,8 +139,7 @@ exports.sendTicketByAttendeeId = async ({attendeeId}) => {
         phone: attendee.phone || "",
         location: event.location,
         registrationTime: formatTime(registration.createdAt),
-        eventStart: formatDateToMonDD(event.startDate),
-        eventEnd: formatDateToMonDD(event.endDate),
+        eventDateDisplay,
         extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
         appName: appInfo.name,
     });
@@ -159,6 +169,81 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
     }
 
     const results = [];
+
+    // If saving only primary attendee details, send a single email to primary including total attendees
+    const saveAll = event?.config?.saveAllAttendeesDetails === true || event?.config?.saveAllAttendeesDetails === 'true';
+    if (!saveAll) {
+        const primary = attendees.find(a => a.isPrimary) || attendees[0];
+        if (!primary) {
+            throw new CustomError("Primary attendee not found", 404);
+        }
+
+        // compute totalAttendees from orders
+        const totalAttendees = await (() => (async () => {
+            const {query} = require('../db');
+            const sql = `
+                SELECT COALESCE(SUM((item->>'quantity')::int), 0) AS total_attendees
+                FROM orders o
+                         CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+                WHERE o.registration_id = $1
+            `;
+            const r = await query(sql, [registration.id]);
+            return r.rows?.[0]?.total_attendees || 0;
+        })())();
+
+        // Generate QR code for the primary attendee only
+        const attachments = [];
+        const qrCodeMain = await generateQrData({
+            registrationId: primary.registrationId,
+            attendeeId: primary.id,
+            qrUuid: primary.qrUuid,
+        });
+        attachments.push({ type: 'qrcode', content: qrCodeMain, cid: 'qrCodeMain' });
+
+        // Extras QR if applicable
+        if (extrasPurchase?.id && extrasPurchase.extrasData?.length) {
+            const qrCodeExtras = await generateQrCode({ id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid });
+            attachments.push({ type: 'qrcode', content: qrCodeExtras, cid: 'qrCodeExtras' });
+        }
+
+        const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+        const sameDay = event?.startDate && event?.endDate
+            ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
+            : false;
+        const eventDateDisplay = (() => {
+            if (!event?.startDate && !event?.endDate) return 'Date TBA';
+            if ((isSingleDay || sameDay) && event?.startDate) return formatDateToMonDD(event.startDate);
+            if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
+            return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+        })();
+
+        const html = compileTicketTemplate({
+            eventName: event.name,
+            name: `${primary.firstName} ${primary.lastName}`,
+            email: primary.email,
+            phone: primary.phone || "",
+            location: event.location,
+            registrationTime: formatTime(registration.createdAt),
+            eventDateDisplay,
+            extrasList: extrasPurchase?.extrasData || [],
+            appName: appInfo.name,
+        });
+
+        const sent = await exports.sendMail({
+            to: primary.email,
+            subject: `🎟️ Tickets for ${event.name}`,
+            html,
+            attachments,
+        });
+
+        return {
+            registrationId,
+            totalAttendees,
+            successfulEmails: 1,
+            failedEmails: 0,
+            results: [{ attendeeId: primary.id, email: primary.email, messageId: sent.messageId, success: true }],
+        };
+    }
 
     // Send email to each attendee
     for (const attendee of attendees) {
@@ -195,6 +280,17 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
                 });
             }
 
+            const isSingleDayEach = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+            const sameDayEach = event?.startDate && event?.endDate
+                ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
+                : false;
+            const eventDateDisplayEach = (() => {
+                if (!event?.startDate && !event?.endDate) return 'Date TBA';
+                if ((isSingleDayEach || sameDayEach) && event?.startDate) return formatDateToMonDD(event.startDate);
+                if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
+                return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+            })();
+
             const html = compileTicketTemplate({
                 eventName: event.name,
                 name: `${attendee.firstName} ${attendee.lastName}`,
@@ -202,8 +298,7 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
                 phone: attendee.phone || "",
                 location: event.location,
                 registrationTime: formatTime(registration.createdAt),
-                eventStart: formatDateToMonDD(event.startDate),
-                eventEnd: formatDateToMonDD(event.endDate),
+                eventDateDisplay: eventDateDisplayEach,
                 extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
                 appName: appInfo.name,
             });

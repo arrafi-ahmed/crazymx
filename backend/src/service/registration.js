@@ -326,6 +326,12 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
         // For users with QR UUID, validate against attendees table
         sql = `
             SELECT r.*,
+                   COALESCE((
+                       SELECT SUM((item->>'quantity')::int)
+                       FROM orders o
+                                CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+                       WHERE o.registration_id = r.id
+                   ), 0) as total_attendees,
                    jsonb_agg(
                            jsonb_build_object(
                                    'id', a.id,
@@ -353,6 +359,12 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
         // For logged in users or without QR UUID, just get registration
         sql = `
             SELECT r.*,
+                   COALESCE((
+                       SELECT SUM((item->>'quantity')::int)
+                       FROM orders o
+                                CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+                       WHERE o.registration_id = r.id
+                   ), 0) as total_attendees,
                    jsonb_agg(
                            jsonb_build_object(
                                    'id', a.id,

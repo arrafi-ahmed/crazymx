@@ -28,6 +28,7 @@ CREATE TABLE event
     end_date           date         NOT NULL,
     banner             VARCHAR(255),
     landing_config     JSONB,                               -- Landing page configuration
+    config             JSONB,                               -- Event configuration settings
     slug               VARCHAR(255) UNIQUE,                 -- Custom URL slug for the event
     currency           VARCHAR(3)   NOT NULL DEFAULT 'USD', -- Event currency
     tax_amount         INT,

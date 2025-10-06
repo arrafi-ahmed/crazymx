@@ -18,30 +18,16 @@ const event = computed(() =>
   prefetchedEvent.value?.id ? prefetchedEvent.value : store.state.event.event,
 )
 
-const newEventInit = {
-  id: null,
-  name: '',
-  description: '',
-  location: '',
-  dateRange: [new Date(), new Date()],
-  banner: '',
-  slug: '',
-  currency: '',
-  clubId: '',
-  createdBy: '',
-  landingConfig: {},
-  taxType: 'percent',
-  taxAmount: 0,
-  rmImage: '',
-}
+const newEventInit = reactive({...new Event({})})
 const newEvent = reactive({ ...newEventInit })
 
+const newUpload = ref('')
 const form = ref(null)
 const isFormValid = ref(true)
 const isLoading = ref(true)
 
 const handleBannerUpdate = (file) => {
-  newEvent.banner = file
+  newUpload.value = file
 }
 
 const handleBannerDelete = () => {
@@ -83,10 +69,10 @@ const handleSubmitEditEvent = async () => {
   )
   formData.append('slug', newEvent.slug)
   formData.append('currency', newEvent.currency)
-  formData.append('landingConfig', JSON.stringify(newEvent.landingConfig))
 
-  if (newEvent.banner) formData.append('files', newEvent.banner)
+  if (newEvent.banner) formData.append('banner', newEvent.banner)
   if (newEvent.rmImage) formData.append('rmImage', newEvent.rmImage)
+  if (newUpload.value) formData.append('files', newUpload.value)
 
   store.dispatch('event/save', formData).then((result) => {
     // newEvent = {...newEvent, ...newEventInit}
@@ -170,7 +156,7 @@ onMounted(async () => {
     <v-row class="mb-6">
       <v-col cols="12">
         <PageTitle
-          subtitle="Update your event details and configuration"
+          :subtitle="event?.name"
           title="Edit Event"
         />
       </v-col>
@@ -419,6 +405,15 @@ onMounted(async () => {
               <!--              </v-expansion-panels>-->
 
               <div class="d-flex align-center mt-3 mt-md-4">
+                <v-btn
+                  :to="{ name: 'event-config', params: { eventId: newEvent.id } }"
+                  :size="xs ? 'default' : 'large'"
+                  color="secondary"
+                  prepend-icon="mdi-cog"
+                  variant="outlined"
+                >
+                  Configuration
+                </v-btn>
                 <v-spacer />
                 <v-btn
                   :size="xs ? 'default' : 'large'"

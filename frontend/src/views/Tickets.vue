@@ -23,6 +23,21 @@ const fetchedEvent = computed(() => store.state.event.event)
 const eventId = computed(() => storedEventId || fetchedEvent.value.id)
 const tickets = computed(() => store.state.ticket.tickets)
 
+// Max tickets per registration from event config
+const maxTicketsPerRegistration = computed(() => {
+  const val = Number(fetchedEvent.value?.config?.maxTicketsPerRegistration)
+  return Number.isFinite(val) && val > 0 ? val : Infinity
+})
+
+// Total selected tickets across all ticket types
+const totalSelectedTickets = computed(() =>
+  selectedTickets.value.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+)
+
+const isAtSelectionLimit = computed(() => totalSelectedTickets.value >= maxTicketsPerRegistration.value)
+
+const getTicketById = (ticketId) => tickets.value.find((t) => t.id === ticketId)
+
 // Get currency from event
 const eventCurrency = computed(() => {
   // Check if event has currency field, otherwise default to USD
@@ -71,6 +86,16 @@ const selectTicket = (ticket, quantityChange = 1) => {
     // Update existing selection
     const currentQuantity = selectedTickets.value[existingIndex].quantity
     const newQuantity = currentQuantity + quantityChange
+    // Enforce global per-registration limit
+    if (quantityChange > 0) {
+      const prospectiveTotal = totalSelectedTickets.value + quantityChange
+      if (prospectiveTotal > maxTicketsPerRegistration.value) {
+        toast.error(`You can select up to ${
+          maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value
+        } tickets per registration`)
+        return
+      }
+    }
 
     if (newQuantity <= 0) {
       // Remove from cart if quantity becomes 0 or negative
@@ -83,6 +108,14 @@ const selectTicket = (ticket, quantityChange = 1) => {
   } else {
     // Add new selection (only if quantityChange is positive)
     if (quantityChange > 0 && quantityChange <= ticket.currentStock) {
+      // Enforce global per-registration limit
+      const prospectiveTotal = totalSelectedTickets.value + quantityChange
+      if (prospectiveTotal > maxTicketsPerRegistration.value) {
+        toast.error(`You can select up to ${
+          maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value
+        } tickets per registration`)
+        return
+      }
       selectedTickets.value.push({
         ticketId: ticket.id,
         title: ticket.title,
@@ -234,7 +267,7 @@ onMounted(async () => {
           md="8"
         >
           <h2 class="text-h4 font-weight-bold mb-4">
-            Available Tickets
+            {{ fetchedEvent?.name || 'Available Tickets' }}
           </h2>
         </v-col>
       </v-row>
@@ -403,7 +436,12 @@ onMounted(async () => {
                   </div>
 
                   <v-btn
-                    :disabled="!ticket.currentStock || ticket.currentStock <= 0 || (isTicketInCart(ticket.id) && selectedTickets.find(item => item.ticketId === ticket.id)?.quantity >= ticket.currentStock)"
+                    :disabled="
+                      !ticket.currentStock ||
+                        ticket.currentStock <= 0 ||
+                        isAtSelectionLimit ||
+                        (isTicketInCart(ticket.id) && selectedTickets.find(item => item.ticketId === ticket.id)?.quantity >= ticket.currentStock)
+                    "
                     class="quantity-btn"
                     color="grey-darken-1"
                     icon
@@ -462,7 +500,7 @@ onMounted(async () => {
   <!-- Quick Continue Button - Fixed Bottom Bar -->
   <v-fade-transition>
     <div
-      v-show="selectedTickets.length > 0"
+      v-show="totalSelectedTickets > 0"
       class="quick-continue-bar"
     >
       <v-container>
@@ -477,7 +515,7 @@ onMounted(async () => {
             </v-icon>
             <div>
               <div class="text-subtitle-2 font-weight-bold text-white">
-                {{ selectedTickets.length }} ticket{{ selectedTickets.length !== 1 ? 's' : '' }} selected
+                {{ totalSelectedTickets }} ticket{{ totalSelectedTickets !== 1 ? 's' : '' }} selected
               </div>
               <div class="text-caption text-white">
                 Total: {{ formatPrice(getTotalAmount(), eventCurrency) }}
@@ -501,7 +539,7 @@ onMounted(async () => {
               Cart
             </v-btn>
             <v-btn
-              :disabled="selectedTickets.length === 0"
+              :disabled="totalSelectedTickets === 0"
               :loading="isProcessingPayment"
               class="continue-btn"
               color="white"
@@ -531,7 +569,7 @@ onMounted(async () => {
     transition="dialog-bottom-transition"
   >
     <v-card
-      class="modern-cart-dialog"
+      class="modern-cart-dialog rounded-lg"
       elevation="0"
     >
       <!-- Sleek Header -->
@@ -551,7 +589,7 @@ onMounted(async () => {
                 Cart
               </div>
               <div class="text-caption text-white">
-                {{ selectedTickets.length }} item{{ selectedTickets.length !== 1 ? 's' : '' }}
+                {{ totalSelectedTickets }} item{{ totalSelectedTickets !== 1 ? 's' : '' }}
               </div>
             </div>
           </div>
@@ -573,7 +611,7 @@ onMounted(async () => {
       <!-- Content -->
       <v-card-text class="pa-0">
         <div
-          v-if="selectedTickets.length === 0"
+          v-if="totalSelectedTickets === 0"
           class="text-center py-12"
         >
           <div class="empty-cart-icon">
@@ -639,6 +677,10 @@ onMounted(async () => {
                     </v-btn>
                     <span class="quantity-text">{{ item.quantity }}</span>
                     <v-btn
+                      :disabled="
+                        isAtSelectionLimit ||
+                          (getTicketById(item.ticketId)?.currentStock ?? 0) <= item.quantity
+                      "
                       class="quantity-btn"
                       color="grey-darken-1"
                       icon
@@ -699,7 +741,7 @@ onMounted(async () => {
             </div>
 
             <v-btn
-              :disabled="selectedTickets.length === 0"
+              :disabled="totalSelectedTickets === 0"
               :loading="isProcessingPayment"
               block
               class="checkout-btn"
@@ -817,10 +859,8 @@ onMounted(async () => {
 }
 
 .modern-cart-dialog {
-  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Cart Header */

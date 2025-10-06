@@ -23,6 +23,16 @@ const fetchData = async () => {
 onMounted(async () => {
   await fetchData()
 })
+
+const formatEventDates = (item) => {
+  const start = item?.startDate
+  const end = item?.endDate
+  const isSingleDay = item?.config?.isSingleDayEvent === true
+  if (!start && !end) return 'Date TBA'
+  if (start && (!end || isSingleDay)) return formatDate(start)
+  const sameDay = new Date(start).toDateString() === new Date(end).toDateString()
+  return sameDay ? formatDate(start) : `${formatDate(start)} - ${formatDate(end)}`
+}
 </script>
 
 <template>
@@ -32,7 +42,7 @@ onMounted(async () => {
       <v-col cols="12">
         <PageTitle
           :show-back-button="false"
-          subtitle="Manage your event settings"
+          :subtitle="store.state.event.event?.name || 'Manage your event settings'"
           title="Admin Dashboard"
         >
           <template #actions>
@@ -108,7 +118,7 @@ onMounted(async () => {
                   mdi-calendar
                 </v-icon>
                 <span class="text-body-2">
-                  {{ formatDate(item.startDate) }} - {{ formatDate(item.endDate) }}
+                  {{ formatEventDates(item) }}
                 </span>
               </div>
               <div class="d-flex align-center">
@@ -200,6 +210,13 @@ onMounted(async () => {
                   title="Import Attendees"
                   @click="
                     router.push({ name: 'import', params: { eventId: item.id, variant: 'main' } })
+                  "
+                />
+                <v-list-item
+                  prepend-icon="mdi-cog"
+                  title="Event Configuration"
+                  @click="
+                    router.push({ name: 'event-config', params: { eventId: item.id } })
                   "
                 />
                 <!--                <v-list-item-->

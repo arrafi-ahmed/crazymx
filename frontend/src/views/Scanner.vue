@@ -25,6 +25,7 @@ const maxRetries = 3
 
 const event = computed(() => store.getters['event/getEventById'](route.params.eventId))
 const result = reactive({})
+const hasResult = ref(false)
 
 // Auto-hide success/error messages
 let successTimer = null
@@ -55,6 +56,7 @@ const showErrorMessage = (message) => {
 
 const handleScan = async ([decodedString]) => {
   isPaused.value = true
+  isScanning.value = true
 
   await store
     .dispatch('checkin/scanByRegistrationId', {
@@ -62,19 +64,15 @@ const handleScan = async ([decodedString]) => {
       eventId: route.params.eventId,
     })
     .then((res) => {
-      Object.assign(result, { ...res.data.payload })
+      // 'res' is already the payload from the store action
+      Object.assign(result, { ...res })
+      hasResult.value = true
       scanCount.value++
       lastScanTime.value = new Date()
-
-      const statusMessage = result.registrationStatus
-        ? 'Check-in successful!'
-        : 'Already checked in'
-      showSuccessMessage(statusMessage)
-    })
-    .catch((err) => {
     })
     .finally(() => {
       isPaused.value = false
+      isScanning.value = false
     })
 }
 
@@ -95,6 +93,7 @@ const switchScanner = () => {
     })
     .finally(() => {
       Object.keys(result).forEach((key) => delete result[key])
+      hasResult.value = false
       resetScanState()
     })
 }
@@ -112,6 +111,7 @@ const toggleScanner = () => {
 
 const clearResults = () => {
   Object.keys(result).forEach((key) => delete result[key])
+  hasResult.value = false
   resetScanState()
 }
 
@@ -223,7 +223,7 @@ onUnmounted(() => {
         >
           <template #actions>
             <v-btn
-              :disabled="Object.keys(result).length === 0"
+              :disabled="!hasResult"
               icon="mdi-refresh"
               size="small"
               title="Clear Results"
@@ -250,7 +250,7 @@ onUnmounted(() => {
 
           <template #mobile-actions>
             <v-btn
-              :disabled="Object.keys(result).length === 0"
+              :disabled="!hasResult"
               icon="mdi-refresh"
               size="small"
               title="Clear Results"
@@ -410,165 +410,25 @@ onUnmounted(() => {
                 </div>
               </div>
 
-              <!-- Success/Error Overlay -->
-              <div
-                v-if="scanSuccess"
-                class="scan-feedback success"
-              >
-                <v-icon
-                  color="success"
-                  icon="mdi-check-circle"
-                  size="64"
-                />
-                <p class="text-success text-h6 mt-2">
-                  Success!
-                </p>
-              </div>
-
-              <div
-                v-if="scanError"
-                class="scan-feedback error"
-              >
-                <v-icon
-                  color="error"
-                  icon="mdi-alert-circle"
-                  size="64"
-                />
-                <p class="text-error text-h6 mt-2">
-                  Error!
-                </p>
-              </div>
+              <!-- Removed in-camera popup overlays; feedback handled via toasts and results below -->
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
+    {{ scannerVariant }}
     <!-- Results Section -->
-    <v-row v-if="Object.keys(result).length > 0">
+    <v-row v-if="hasResult">
       <v-col
         class="mx-auto"
         cols="12"
         lg="8"
         md="10"
       >
-        <!-- Attendee Details -->
-        <v-card
-          v-if="scannerVariant === 'main' && result.registrationData"
-          class="mb-4"
-        >
-          <v-card-title class="d-flex align-center pa-4">
-            <v-icon
-              class="mr-2"
-              color="primary"
-              icon="mdi-account-details"
-              size="24"
-            />
-            <span>Attendee Details</span>
-            <v-spacer />
-            <v-chip
-              :color="result.status === true ? 'success' : 'warning'"
-              size="small"
-              variant="flat"
-            >
-              {{ result.status === true ? 'Checked In' : 'Not Checked In' }}
-            </v-chip>
-          </v-card-title>
-
-          <v-card-text class="pa-4">
-            <v-row>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Name</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.registrationData?.name }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Email</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.registrationData?.email }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Phone</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.registrationData?.phone }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Registration Time</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ formatDateTime(result.registrationTime) }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Check-in Time</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.checkinTime ? formatDateTime(result.checkinTime) : 'Pending' }}
-                  </p>
-                </div>
-              </v-col>
-            </v-row>
-
-            <!-- Additional Fields -->
-            <v-expand-transition>
-              <div
-                v-if="
-                  result.registrationData?.others &&
-                    Object.keys(result.registrationData.others).length > 0
-                "
-              >
-                <v-divider class="my-4" />
-                <h4 class="text-subtitle-1 font-weight-medium mb-3">
-                  Additional Information
-                </h4>
-                <v-row>
-                  <v-col
-                    v-for="(value, key) in result.registrationData.others"
-                    :key="key"
-                    cols="12"
-                    md="6"
-                  >
-                    <div class="info-item">
-                      <label class="text-caption text-medium-emphasis">{{ key }}</label>
-                      <p class="text-body-1 font-weight-medium">
-                        {{ value }}
-                      </p>
-                    </div>
-                  </v-col>
-                </v-row>
-              </div>
-            </v-expand-transition>
-          </v-card-text>
-        </v-card>
-
         <!-- Voucher Details -->
         <v-card
-          v-else-if="scannerVariant === 'voucher' && result.extrasData?.length > 0"
+          v-if="scannerVariant === 'voucher' && result.extrasData?.length > 0"
           class="mb-4"
         >
           <v-card-title class="d-flex align-center pa-4">
@@ -643,6 +503,131 @@ onUnmounted(() => {
                 </template>
               </v-list-item>
             </v-list>
+          </v-card-text>
+        </v-card>
+
+        <!-- Attendee Details -->
+        <v-card
+          v-else
+          class="mb-4"
+        >
+          <v-card-title class="d-flex align-center pa-4">
+            <v-icon
+              class="mr-2"
+              color="primary"
+              icon="mdi-account-details"
+              size="24"
+            />
+            <span>Attendee Details</span>
+            <v-spacer />
+            <v-chip
+              :color="(result.registrationStatus ?? result.status) === true ? 'success' : 'warning'"
+              size="small"
+              variant="flat"
+            >
+              {{ (result.registrationStatus ?? result.status) === true ? 'Checked In' : 'Not Checked In' }}
+            </v-chip>
+          </v-card-title>
+
+          <v-card-text class="pa-4">
+            <v-row>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Name</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ [result.firstName, result.lastName].filter(Boolean).join(' ') || result.registrationData?.name || 'N/A' }}
+                  </p>
+                </div>
+              </v-col>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Email</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ result.email || result.registrationData?.email || 'N/A' }}
+                  </p>
+                </div>
+              </v-col>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Phone</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ result.phone || result.registrationData?.phone || 'N/A' }}
+                  </p>
+                </div>
+              </v-col>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Ticket</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ result.ticketTitle }}
+                  </p>
+                </div>
+              </v-col>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Check-in Time</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ result.checkinTime ? formatDateTime(result.checkinTime) : 'Pending' }}
+                  </p>
+                </div>
+              </v-col>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <div class="info-item">
+                  <label class="text-caption text-medium-emphasis">Total Attendees</label>
+                  <p class="text-body-1 font-weight-medium">
+                    {{ result.totalAttendees ?? 'N/A' }}
+                  </p>
+                </div>
+              </v-col>
+            </v-row>
+
+            <!-- Additional Fields -->
+            <v-expand-transition>
+              <div
+                v-if="
+                  result.registrationData?.others &&
+                    Object.keys(result.registrationData.others).length > 0
+                "
+              >
+                <v-divider class="my-4" />
+                <h4 class="text-subtitle-1 font-weight-medium mb-3">
+                  Additional Information
+                </h4>
+                <v-row>
+                  <v-col
+                    v-for="(value, key) in result.registrationData.others"
+                    :key="key"
+                    cols="12"
+                    md="6"
+                  >
+                    <div class="info-item">
+                      <label class="text-caption text-medium-emphasis">{{ key }}</label>
+                      <p class="text-body-1 font-weight-medium">
+                        {{ value }}
+                      </p>
+                    </div>
+                  </v-col>
+                </v-row>
+              </div>
+            </v-expand-transition>
           </v-card-text>
         </v-card>
       </v-col>

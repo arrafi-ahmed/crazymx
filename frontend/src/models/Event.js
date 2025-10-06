@@ -14,8 +14,17 @@ export class Event {
     this.landingConfig = data.landingConfig || null
     this.slug = data.slug || null
     this.currency = data.currency || 'USD'
+    this.taxAmount = data.taxAmount || null
+    this.taxType = data.taxType || null
     this.clubId = data.clubId || null
     this.createdBy = data.createdBy || null
+    
+    // Configuration fields
+    this.config = data.config || {
+      maxTicketsPerRegistration: 10,
+      saveAllAttendeesDetails: true,
+      isSingleDayEvent: true,
+    }
   }
 
   /**
@@ -133,8 +142,11 @@ export class Event {
       landingConfig: this.landingConfig,
       slug: this.slug,
       currency: this.currency,
+      taxAmount: this.taxAmount,
+      taxType: this.taxType,
       clubId: this.clubId,
       createdBy: this.createdBy,
+      config: this.config,
     }
   }
 }

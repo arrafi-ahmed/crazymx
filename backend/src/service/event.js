@@ -63,7 +63,7 @@ exports.save = async ({payload, files, currentUser}) => {
     }
 
     // update event - check authorization
-    else if (currentUser.role !== "sudo") {
+    else if (!ifSudo(currentUser.role)) {
         const sql = `
             SELECT *
             FROM event
@@ -90,14 +90,6 @@ exports.save = async ({payload, files, currentUser}) => {
         if (!newEvent.banner) newEvent.banner = null;
     }
 
-    // handle landing config
-    if (payload.landingConfig) {
-        newEvent.landingConfig =
-            typeof payload.landingConfig === "string"
-                ? JSON.parse(payload.landingConfig)
-                : payload.landingConfig;
-    }
-
     // handle slug generation
     if (shouldCreate || (payload.slug && payload.slug !== newEvent.slug)) {
         if (payload.slug && payload.slug.trim()) {
@@ -118,7 +110,7 @@ exports.save = async ({payload, files, currentUser}) => {
 
     if (shouldCreate) {
         const sql = `
-            INSERT INTO event (name, description, start_date, end_date, location, banner, landing_config, slug, currency, club_id,
+            INSERT INTO event (name, description, start_date, end_date, location, banner, slug, currency, club_id,
                                created_by, registration_count)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *
         `;
@@ -129,7 +121,6 @@ exports.save = async ({payload, files, currentUser}) => {
             newEvent.endDate,
             newEvent.location,
             newEvent.banner,
-            JSON.stringify(newEvent.landingConfig || {}),
             newEvent.slug,
             newEvent.currency || 'USD',
             newEvent.clubId,
@@ -405,5 +396,95 @@ exports.getFirstEvent = async () => {
         ORDER BY e.start_date ASC LIMIT 1
     `;
     const result = await query(sql);
+    return result.rows[0];
+};
+
+exports.saveConfig = async ({payload, currentUser}) => {
+    // const eventId = payload.id;
+    
+    // // Check authorization
+    // if (!ifSudo(currentUser.role)) {
+    //     const sql = `
+    //         SELECT *
+    //         FROM event
+    //         WHERE id = $1
+    //           AND club_id = $2
+    //     `;
+    //     const result = await query(sql, [eventId, currentUser.clubId]);
+    //     console.log(1, payload, currentUser, result.rows[0])
+    //     const existingEvent = result.rows[0];
+    //     if (!existingEvent || !existingEvent.id) {
+    //         throw new CustomError("Access denied", 401);
+    //     }
+    // }
+
+    // // Prepare configuration object
+    // const config = {
+    //     maxTicketsPerRegistration: parseInt(payload.maxTicketsPerRegistration) || 10,
+    //     allowMultipleRegistrations: payload.allowMultipleRegistrations === 'true',
+    //     saveAllAttendeesDetails: payload.saveAllAttendeesDetails === 'true',
+    //     isSingleDayEvent: payload.isSingleDayEvent === 'true',
+    // };
+
+    // Update event with configuration
+    const sql = `
+        UPDATE event
+        SET config = $1
+        WHERE id = $2
+        RETURNING *
+    `;
+    
+    const values = [
+        JSON.stringify(payload.config),
+        payload.eventId
+    ];
+    
+    const result = await query(sql, values);
+    return result.rows[0];
+};
+
+exports.saveLandingConfig = async ({payload, currentUser}) => {
+    const eventId = payload.id;
+    
+    // Check authorization
+    if (!ifSudo(currentUser.role)) {
+        const sql = `
+            SELECT *
+            FROM event
+            WHERE id = $1
+              AND club_id = $2
+        `;
+        const result = await query(sql, [eventId, currentUser.clubId]);
+        const existingEvent = result.rows[0];
+        if (!existingEvent || !existingEvent.id) {
+            throw new CustomError("Access denied", 401);
+        }
+    }
+
+    // Prepare landing configuration object
+    const landingConfig = {
+        enableLandingPage: payload.enableLandingPage === 'true',
+        heroTitle: payload.heroTitle || '',
+        heroSubtitle: payload.heroSubtitle || '',
+        overviewTitle: payload.overviewTitle || '',
+        overviewDescription: payload.overviewDescription || '',
+        customCSS: payload.customCSS || '',
+        customJS: payload.customJS || '',
+    };
+
+    // Update event with landing configuration
+    const sql = `
+        UPDATE event
+        SET landing_config = $1
+        WHERE id = $2
+        RETURNING *
+    `;
+    
+    const values = [
+        JSON.stringify(landingConfig),
+        eventId
+    ];
+    
+    const result = await query(sql, values);
     return result.rows[0];
 };

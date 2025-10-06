@@ -5,6 +5,7 @@ export default class Extras {
     name = null,
     description = null,
     price = null,
+    currency = 'USD',
     content = [new ExtrasItem()],
     stripeProductId = null,
     stripePriceId = null,
@@ -13,6 +14,7 @@ export default class Extras {
     this.name = name
     this.description = description
     this.price = price
+    this.currency = currency
     this.content = content
     this.stripeProductId = stripeProductId
     this.stripePriceId = stripePriceId

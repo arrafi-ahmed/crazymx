@@ -11,6 +11,7 @@ export class Attendee {
     this.email = data.email || ''
     this.phone = data.phone || null
     this.ticketId = data.ticketId || null
+    this.ticketTitle = data.ticketTitle || null
     this.qrUuid = data.qrUuid || null
     this.createdAt = data.createdAt || null
     this.updatedAt = data.updatedAt || null

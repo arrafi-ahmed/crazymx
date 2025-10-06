@@ -340,7 +340,7 @@ onMounted(async () => {
                   <div
                     v-for="item in selectedTickets"
                     :key="item.ticketId"
-                    class="order-item mb-3"
+                    class="order-item"
                   >
                     <div class="d-flex justify-space-between align-center">
                       <div>
@@ -366,10 +366,10 @@ onMounted(async () => {
                 <!-- Total -->
                 <v-divider class="my-4" />
                 <div class="d-flex justify-space-between align-center">
-                  <div class="text-h6 font-weight-bold">
+                  <div class="font-weight-bold">
                     Subtotal
                   </div>
-                  <div class="text-h6 font-weight-bold">
+                  <div class="font-weight-bold">
                     {{ formatPrice(subtotalAmount, eventCurrency) }}
                   </div>
                 </div>
@@ -397,17 +397,17 @@ onMounted(async () => {
                 <!-- Attendee Info -->
                 <div
                   v-if="attendees?.length > 0"
-                  class="mt-6"
+                  class="mt-3"
                 >
-                  <v-divider class="mb-4" />
+                  <v-divider class="mb-3" />
                   <div class="text-subtitle-2 font-weight-medium mb-3">
-                    Attendee Details
+                    Attendees:
                   </div>
                   <div class="attendee-info">
                     <div
                       v-for="(attendee, index) in attendees"
                       :key="index"
-                      class="mb-3"
+                      class="mb-2"
                     >
                       <div class="text-body-2">
                         <strong>Attendee {{ index + 1 }}:</strong>
@@ -419,13 +419,6 @@ onMounted(async () => {
                       >
                         <strong>Email:</strong>
                         {{ attendee.email }}
-                      </div>
-                      <div
-                        v-if="attendee.phone"
-                        class="text-body-2 text-medium-emphasis"
-                      >
-                        <strong>Phone:</strong>
-                        {{ attendee.phone }}
                       </div>
                       <div
                         v-if="attendee.ticketTitle"
@@ -452,7 +445,7 @@ onMounted(async () => {
               elevation="4"
             >
               <v-card-title class="text-h4 text-center pa-6">
-                {{ isFreeOrder ? 'Complete Free Registration' : 'Complete Your Registration' }}
+                {{ fetchedEvent?.name || 'Registration' }}
               </v-card-title>
 
               <v-card-text class="pa-6">

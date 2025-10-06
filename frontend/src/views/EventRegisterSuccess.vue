@@ -146,6 +146,29 @@ const goToHome = () => {
 onMounted(() => {
   fetchTempRegistration()
 })
+
+// Derive purchased tickets list from order.items (preferred) or selectedTickets fallback
+const purchasedTickets = computed(() => {
+  const items = tempRegistration.value?.orders?.items
+  if (Array.isArray(items) && items.length) {
+    return items.map((i) => ({
+      ticketId: i.ticketId,
+      title: i.title,
+      unitPrice: Number(i.unitPrice || i.price || 0),
+      quantity: Number(i.quantity || 1),
+    }))
+  }
+  const sel = tempRegistration.value?.selectedTickets
+  if (Array.isArray(sel) && sel.length) {
+    return sel.map((i) => ({
+      ticketId: i.ticketId,
+      title: i.title,
+      unitPrice: Number(i.unitPrice || i.price || 0),
+      quantity: Number(i.quantity || 1),
+    }))
+  }
+  return []
+})
 </script>
 
 <template>
@@ -257,15 +280,15 @@ onMounted(() => {
                   variant="outlined"
                 >
                   <p>
-                    <strong>Order Number:</strong>
+                    <strong>Order Number: </strong>
                     {{ tempRegistration.orders.orderNumber }}
                   </p>
                   <p>
-                    <strong>Total Amount:</strong>
+                    <strong>Total Amount: </strong>
                     {{ formatPrice(tempRegistration.orders.totalAmount, tempRegistration.orders.currency) }}
                   </p>
                   <p>
-                    <strong>Status:</strong>
+                    <strong>Status: </strong>
                     <span
                       :class="
                         tempRegistration.orders.paymentStatus === 'free'
@@ -280,6 +303,35 @@ onMounted(() => {
                       }}
                     </span>
                   </p>
+                  <v-divider class="my-4" />
+                  <h5 class="text-subtitle-1 mb-2">
+                    Tickets Purchased
+                  </h5>
+                  <div v-if="purchasedTickets.length">
+                    <div
+                      v-for="(item, idx) in purchasedTickets"
+                      :key="idx"
+                      class="ticket-summary-item"
+                    >
+                      <div class="ticket-summary-info">
+                        <div class="ticket-summary-name">
+                          <v-icon
+                            class="mr-2"
+                            color="primary"
+                            size="18"
+                          >
+                            mdi-ticket
+                          </v-icon>
+                          {{ item.title }}
+                        </div>
+                        <div class="ticket-summary-details">
+                          <span class="ticket-summary-price">{{ formatPrice(item.unitPrice, tempRegistration.orders.currency) }}</span>
+                          <span class="ticket-summary-qty">× {{ item.quantity }}</span>
+                          <span class="ticket-summary-total">{{ formatPrice(item.unitPrice * item.quantity, tempRegistration.orders.currency) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </v-card>
               </div>
 
@@ -564,7 +616,7 @@ onMounted(() => {
 }
 
 .ticket-summary-item {
-  padding: 12px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(var(--v-theme-outline), 0.2);
 }
 

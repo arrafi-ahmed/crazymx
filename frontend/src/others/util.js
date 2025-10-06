@@ -14,8 +14,24 @@ export const sendToWhatsapp = (phone, message) => {
   window.open(whatsappShareLink, '_blank')
 }
 
+// Interpret 'YYYY-MM-DD' as a local date to avoid timezone shifts
+const parseAsLocalDate = (input) => {
+  if (!input) return null
+  if (typeof input === 'string') {
+    const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (m) {
+      const y = Number(m[1])
+      const mo = Number(m[2]) - 1
+      const d = Number(m[3])
+      return new Date(y, mo, d)
+    }
+  }
+  return new Date(input)
+}
+
 export const formatDate = (inputDate) => {
-  const date = new Date(inputDate)
+  const date = parseAsLocalDate(inputDate)
+  if (!(date instanceof Date) || isNaN(date)) return ''
   const day = `0${date.getDate()}`.slice(-2)
   const month = `0${date.getMonth() + 1}`.slice(-2)
   const year = date.getFullYear()
@@ -31,11 +47,11 @@ export const toLocalISOString = (inputDate) => {
 }
 
 export const formatDateTime = (inputDateTime) => {
-  const formattedDate = formatDate(inputDateTime)
-  const date = new Date(inputDateTime)
+  const date = parseAsLocalDate(inputDateTime)
+  if (!(date instanceof Date) || isNaN(date)) return ''
+  const formattedDate = formatDate(date)
   const hours = `0${date.getHours()}`.slice(-2)
   const minutes = `0${date.getMinutes()}`.slice(-2)
-  // const seconds = `0${date.getSeconds()}`.slice(-2);
   return `${formattedDate} ${hours}:${minutes}`
 }
 

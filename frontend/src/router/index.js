@@ -119,6 +119,24 @@ const routes = [
         },
       },
       {
+        path: 'event/:eventId/config',
+        name: 'event-config',
+        component: () => import('@/views/EventConfig.vue'),
+        meta: {
+          requiresAdmin: true,
+          title: 'Event Configuration',
+        },
+      },
+      {
+        path: 'event/:eventId/landing-config',
+        name: 'event-landing-config',
+        component: () => import('@/views/EventLandingConfig.vue'),
+        meta: {
+          requiresAdmin: true,
+          title: 'Landing Page Configuration',
+        },
+      },
+      {
         path: 'event/:eventId/tickets',
         name: 'event-tickets',
         component: () => import('@/views/EventTickets.vue'),

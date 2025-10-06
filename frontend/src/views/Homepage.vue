@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { computed, onMounted, ref } from 'vue'
 import { getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
+import { formatDate } from '@/others/util'
 
 const router = useRouter()
 const store = useStore()
@@ -21,12 +22,16 @@ const formatEventData = (events) => {
     .map((event) => ({
       id: event.id,
       title: event.name,
-      date: new Date(event.startDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
+      date: (() => {
+        const isSingleDay = event?.config?.isSingleDayEvent === true
+        const hasRange = event?.startDate && event?.endDate
+        const sameDay = hasRange
+          ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
+          : true
+        if (isSingleDay || sameDay) return formatDate(event.startDate)
+        if (hasRange) return `${formatDate(event.startDate)} - ${formatDate(event.endDate)}`
+        return formatDate(event.startDate)
+      })(),
       time: new Date(event.startDate).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',

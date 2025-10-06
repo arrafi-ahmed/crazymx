@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
+import { useRoute, useRouter } from 'vue-router'
 
 // Props
 const props = defineProps({
@@ -21,6 +22,33 @@ const props = defineProps({
 // Computed
 const { mobile } = useDisplay()
 const isMobile = computed(() => mobile.value)
+
+// Router
+const route = useRoute()
+const router = useRouter()
+
+const handleBack = () => {
+  const name = route.name?.toString() || ''
+  // If on admin event child routes, go to admin dashboard
+  const adminEventChildren = [
+    'event-edit',
+    'event-config',
+    'event-attendees',
+    'event-tickets',
+    'event-extras',
+    'event-sponsorships',
+    'event-sponsorship-packages',
+    'import',
+    'statistics',
+    'form-builder',
+  ]
+  if (adminEventChildren.includes(name)) {
+    router.push({ name: 'dashboard-admin' })
+    return
+  }
+  // Default: browser back
+  router.back()
+}
 </script>
 
 <template>
@@ -29,20 +57,41 @@ const isMobile = computed(() => mobile.value)
     <div class="d-flex align-center justify-space-between gap-4 mb-2">
       <!-- Left Side: Back Button + Page Title -->
       <div class="d-flex align-center gap-3 flex-grow-1 min-width-0">
-        <v-btn
-          v-if="showBackButton"
-          icon="mdi-arrow-left"
-          size="large"
-          variant="text"
-          @click="$router.back()"
-        />
-        <div>
-          <h1 class="text-h3 font-weight-bold mb-0">
-            {{ title }}
-          </h1>
-          <p class="text-body-1 text-medium-emphasis mb-0">
-            {{ subtitle }}
-          </p>
+        <div class="flex-grow-1">
+          <!-- Mobile back text on its own row -->
+          <div
+            v-if="showBackButton && isMobile"
+            class="mb-1"
+          >
+            <v-btn
+              variant="text"
+              size="small"
+              prepend-icon="mdi-chevron-left"
+              class="px-1"
+              flat
+              @click="handleBack"
+            >
+              Back
+            </v-btn>
+          </div>
+          <!-- Desktop back icon inline -->
+          <div class="d-flex align-center gap-2">
+            <v-btn
+              v-if="showBackButton && !isMobile"
+              icon="mdi-arrow-left"
+              size="large"
+              variant="text"
+              @click="handleBack"
+            />
+            <div>
+              <h1 class="text-h3 font-weight-bold mb-0">
+                {{ title }}
+              </h1>
+              <p class="text-body-1 text-medium-emphasis mb-0">
+                {{ subtitle }}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
