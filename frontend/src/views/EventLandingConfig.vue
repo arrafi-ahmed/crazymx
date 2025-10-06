@@ -52,7 +52,7 @@ const handleSubmitLandingConfig = async () => {
     formData.append('customJS', landingConfig.customJS)
 
     await store.dispatch('event/saveLandingConfig', formData)
-
+    
     // Show success message or redirect
     router.push({
       name: 'event-config',
@@ -158,9 +158,7 @@ onMounted(async () => {
             >
               <!-- Landing Page Toggle -->
               <v-card-title class="text-h6 pa-0 mb-4">
-                <v-icon class="me-2">
-                  mdi-web
-                </v-icon>
+                <v-icon class="me-2">mdi-web</v-icon>
                 Landing Page Settings
               </v-card-title>
 
@@ -183,9 +181,7 @@ onMounted(async () => {
               <!-- Hero Section -->
               <v-divider class="my-6" />
               <v-card-title class="text-h6 pa-0 mb-4">
-                <v-icon class="me-2">
-                  mdi-image-text
-                </v-icon>
+                <v-icon class="me-2">mdi-image-text</v-icon>
                 Hero Section
               </v-card-title>
 
@@ -223,9 +219,7 @@ onMounted(async () => {
               <!-- Overview Section -->
               <v-divider class="my-6" />
               <v-card-title class="text-h6 pa-0 mb-4">
-                <v-icon class="me-2">
-                  mdi-information
-                </v-icon>
+                <v-icon class="me-2">mdi-information</v-icon>
                 Overview Section
               </v-card-title>
 
@@ -263,9 +257,7 @@ onMounted(async () => {
               <!-- Custom Code Section -->
               <v-divider class="my-6" />
               <v-card-title class="text-h6 pa-0 mb-4">
-                <v-icon class="me-2">
-                  mdi-code-tags
-                </v-icon>
+                <v-icon class="me-2">mdi-code-tags</v-icon>
                 Custom Code
               </v-card-title>
 

@@ -59,16 +59,11 @@ const handleBack = () => {
       <div class="d-flex align-center gap-3 flex-grow-1 min-width-0">
         <div class="flex-grow-1">
           <!-- Mobile back text on its own row -->
-          <div
-            v-if="showBackButton && isMobile"
-            class="mb-1"
-          >
+          <div v-if="showBackButton && isMobile" class="mb-1">
             <v-btn
               variant="text"
               size="small"
-              prepend-icon="mdi-chevron-left"
-              class="px-1"
-              flat
+              class="pa-0"
               @click="handleBack"
             >
               Back
@@ -84,12 +79,12 @@ const handleBack = () => {
               @click="handleBack"
             />
             <div>
-              <h1 class="text-h3 font-weight-bold mb-0">
-                {{ title }}
-              </h1>
-              <p class="text-body-1 text-medium-emphasis mb-0">
-                {{ subtitle }}
-              </p>
+          <h1 class="text-h3 font-weight-bold mb-0">
+            {{ title }}
+          </h1>
+          <p class="text-body-1 text-medium-emphasis mb-0">
+            {{ subtitle }}
+          </p>
             </div>
           </div>
         </div>

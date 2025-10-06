@@ -9,7 +9,7 @@ import { useDisplay } from 'vuetify'
 const store = useStore()
 const router = useRouter()
 const route = useRoute()
-const { smAndUp, xs } = useDisplay()
+const { smAndUp } = useDisplay()
 
 const signedin = computed(() => store.getters['auth/signedin'])
 const currentUser = computed(() => store.getters['auth/getCurrentUser'])
@@ -84,40 +84,18 @@ const menuItems = computed(() => {
 
 const drawer = ref(false)
 const isScrolled = ref(false)
-const canShrink = ref(false)
-let rafId = null
 
-// Calculate if page has enough scrollable space to apply shrink
-const updateCanShrink = () => {
-  const doc = document.documentElement
-  const scrollable = (doc?.scrollHeight || 0) - window.innerHeight
-  // Disable shrink entirely on xs; enable only if there's some scroll space on larger screens
-  canShrink.value = scrollable > 32
-}
-
-// Scroll detection (throttled via rAF)
+// Scroll detection
 const handleScroll = () => {
-  if (rafId) return
-  rafId = requestAnimationFrame(() => {
-    rafId = null
-    if (!canShrink.value) {
-      isScrolled.value = false
-      return
-    }
-    isScrolled.value = window.scrollY > 50
-  })
+  isScrolled.value = window.scrollY > 50
 }
 
 onMounted(() => {
-  updateCanShrink()
   window.addEventListener('scroll', handleScroll)
-  window.addEventListener('resize', updateCanShrink)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-  window.removeEventListener('resize', updateCanShrink)
-  if (rafId) cancelAnimationFrame(rafId)
 })
 
 // Props for back button functionality
@@ -218,8 +196,9 @@ const goBack = () => {
     :order="1"
     class="modern-app-bar bg-transparent"
     color="transparent"
-    :height="isScrolled ? 80 : 130"
     elevation="0"
+    :height="130"
+    :class="{ 'appbar-compact': isScrolled }"
   >
     <div class="app-bar-container bg-transparent justify-center">
       <!-- User Menu -->
@@ -245,7 +224,7 @@ const goBack = () => {
         <Logo
           :img-src="getClientPublicImageUrl('logo.webp')"
           class="app-logo"
-          :class="{ 'logo-compact': isScrolled, 'logo-expanded': !isScrolled }"
+          :class="{ 'logo-compact': isScrolled }"
           width="180"
         />
       </div>
@@ -453,15 +432,16 @@ const goBack = () => {
   max-width: 0;
   max-height: 0;
 }
-
+.appbar-compact{
+  transform: scale(0.7);
+  opacity: 0.9;
+}
 /* Logo hide animation on scroll */
 .logo-compact {
   opacity: 0.9;
   transform: scale(0.7);
   transition: all 0.3s ease;
   pointer-events: none;
-  max-width: auto;
-  height: 56px;
 }
 
 .logo-expanded {
