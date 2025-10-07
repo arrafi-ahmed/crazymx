@@ -46,11 +46,19 @@ export default defineConfig({
     port: 3000,
   },
   // added
-  // build: {
-  //   rollupOptions: {
-  //     output: {
-  //       assetFileNames: "[name].[ext]", // Preserve original file names
-  //     },
-  //   },
-  // },
+  build: {
+    // Optimize build for production
+    minify: 'esbuild',
+    chunkSizeWarningLimit: 1600,
+    // Don't use compression plugins - let Nginx handle it
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'vuex'],
+          'vendor-vuetify': ['vuetify'],
+        }
+      }
+    }
+  },
+
 })
