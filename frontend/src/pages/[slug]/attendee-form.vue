@@ -189,7 +189,7 @@
 
     // Fetch event config by slug to determine saveAllAttendeesDetails
     try {
-      await store.dispatch('event/setEventBySlug', route.params.slug)
+      await store.dispatch('event/setEventBySlug', {slug: route.params.slug})
       // await $axios.get(`/event/getEventBySlug`, { params: { slug: route.params.slug } })
     } catch {
       // Keep default behavior (multi-attendee) if config fails to load

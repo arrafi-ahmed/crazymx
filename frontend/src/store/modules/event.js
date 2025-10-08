@@ -106,7 +106,7 @@ export const actions = {
       console.log(55, request)
       $axios
         .get('/event/getEventBySlug', {
-          params: { slug: request },
+          params: { slug: request.slug },
         })
         .then(response => {
           commit('setEvent', response.data?.payload)

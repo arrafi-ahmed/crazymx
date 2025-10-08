@@ -1,86 +1,86 @@
 <script setup>
-import { useRouter } from 'vue-router'
-import { useStore } from 'vuex'
-import { computed, onMounted, ref } from 'vue'
-import { getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
-import { formatDate } from '@/others/util'
+  import { computed, onMounted, ref } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useStore } from 'vuex'
+  import { formatDate, getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
 
-const router = useRouter()
-const store = useStore()
+  const router = useRouter()
+  const store = useStore()
 
-// Reactive data
-const isLoading = ref(true)
-const upcomingEvents = ref([])
+  // Reactive data
+  const isLoading = ref(true)
+  const upcomingEvents = ref([])
 
-// Computed properties
-const events = computed(() => store.state.event.events)
-const currentUser = computed(() => store.getters['auth/getCurrentUser'])
+  // Computed properties
+  const events = computed(() => store.state.event.events)
+  const currentUser = computed(() => store.getters['auth/getCurrentUser'])
 
-// Format event data for display
-const formatEventData = (events) => {
-  return events
-    .map((event) => ({
-      id: event.id,
-      title: event.name,
-      date: (() => {
-        const isSingleDay = event?.config?.isSingleDayEvent === true
-        const hasRange = event?.startDate && event?.endDate
-        const sameDay = hasRange
-          ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
-          : true
-        if (isSingleDay || sameDay) return formatDate(event.startDate)
-        if (hasRange) return `${formatDate(event.startDate)} - ${formatDate(event.endDate)}`
-        return formatDate(event.startDate)
-      })(),
-      time: new Date(event.startDate).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      }),
-      location: event.location || 'Cathedral Venue',
-      description: event.description === 'null' ? '' : event.description,
-      banner: event.banner
-        ? getApiPublicImageUrl(event.banner, 'event-banner')
-        : getClientPublicImageUrl('default-event2.jpeg'),
-      slug: event.slug,
-      registrationCount: event.registrationCount,
-      startDate: event.startDate,
-      endDate: event.endDate,
-    }))
-    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-}
-
-// Fetch events
-const fetchEvents = async () => {
-  try {
-    isLoading.value = true
-
-    // Get club ID from current user or use default
-    const clubId = currentUser.value?.clubId || 1
-
-    // Fetch events from store
-    await store.dispatch('event/setEvents', clubId)
-
-    // Format and set upcoming events
-    upcomingEvents.value = formatEventData(events.value)
-  } catch (error) {
-    console.error('Error fetching events:', error)
-  } finally {
-    isLoading.value = false
+  // Format event data for display
+  function formatEventData (events) {
+    return events
+      .map(event => ({
+        id: event.id,
+        title: event.name,
+        date: (() => {
+          const isSingleDay = event?.config?.isSingleDayEvent === true
+          const hasRange = event?.startDate && event?.endDate
+          const sameDay = hasRange
+            ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
+            : true
+          if (isSingleDay || sameDay) return formatDate(event.startDate)
+          if (hasRange) return `${formatDate(event.startDate)} - ${formatDate(event.endDate)}`
+          return formatDate(event.startDate)
+        })(),
+        time: new Date(event.startDate).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }),
+        location: event.location,
+        description: event.description === 'null' ? '' : event.description,
+        banner: event.banner
+          ? getApiPublicImageUrl(event.banner, 'event-banner')
+          : getClientPublicImageUrl('default-event2.jpeg'),
+        slug: event.slug,
+        registrationCount: event.registrationCount,
+        startDate: event.startDate,
+        endDate: event.endDate,
+      }))
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
   }
-}
 
-const navigateToEvent = (event) => {
-  if (event.slug) {
-    router.push({ name: 'event-landing-slug', params: { slug: event.slug } })
-  } else {
-    router.push({ name: 'event-landing', params: { eventId: event.id } })
+  // Fetch events
+  async function fetchEvents () {
+    try {
+      isLoading.value = true
+
+      // Get club ID from current user or use default
+      const clubId = currentUser.value?.clubId || 1
+
+      // Fetch events from store
+      await store.dispatch('event/setEvents', clubId)
+
+      // Format and set upcoming events
+      upcomingEvents.value = formatEventData(events.value)
+    } catch (error) {
+      console.error('Error fetching events:', error)
+    } finally {
+      isLoading.value = false
+    }
   }
-}
 
-onMounted(() => {
-  fetchEvents()
-})
+  function navigateToEvent (event) {
+    console.log(8,event)
+    if (event.slug) {
+      router.push({ name: 'event-landing-slug', params: { slug: event.slug } })
+    } else {
+      router.push({ name: 'event-landing', params: { eventId: event.id } })
+    }
+  }
+
+  onMounted(() => {
+    fetchEvents()
+  })
 </script>
 
 <template>
@@ -120,8 +120,8 @@ onMounted(() => {
           class="loading-container"
         >
           <v-progress-circular
-            indeterminate
             color="primary"
+            indeterminate
             size="64"
           />
           <p class="loading-text">
@@ -138,11 +138,11 @@ onMounted(() => {
           <v-col
             v-for="event in upcomingEvents"
             :key="event.id"
-            cols="12"
-            sm="10"
-            md="6"
-            lg="4"
             class="event-col"
+            cols="12"
+            lg="4"
+            md="6"
+            sm="10"
           >
             <div
               class="event-card"
@@ -150,8 +150,8 @@ onMounted(() => {
             >
               <div class="event-image">
                 <img
-                  :src="event.banner"
                   :alt="event.title"
+                  :src="event.banner"
                 >
                 <div
                   class="event-badge"
@@ -166,8 +166,8 @@ onMounted(() => {
                 <div class="event-meta">
                   <div class="event-date">
                     <v-icon
-                      size="16"
                       color="primary"
+                      size="16"
                     >
                       mdi-calendar
                     </v-icon>
@@ -175,8 +175,8 @@ onMounted(() => {
                   </div>
                   <div class="event-time">
                     <v-icon
-                      size="16"
                       color="primary"
+                      size="16"
                     >
                       mdi-clock
                     </v-icon>
@@ -184,8 +184,8 @@ onMounted(() => {
                   </div>
                   <div class="event-location">
                     <v-icon
-                      size="16"
                       color="primary"
+                      size="16"
                     >
                       mdi-map-marker
                     </v-icon>
@@ -197,9 +197,9 @@ onMounted(() => {
                 </p>
                 <div class="event-actions">
                   <v-btn
+                    class="event-btn"
                     color="secondary"
                     variant="flat"
-                    class="event-btn"
                   >
                     Reserve Now
                   </v-btn>
@@ -215,8 +215,8 @@ onMounted(() => {
           class="no-events"
         >
           <v-icon
-            size="64"
             color="primary"
+            size="64"
           >
             mdi-calendar-outline
           </v-icon>
@@ -271,8 +271,8 @@ onMounted(() => {
           </div>
           <div class="about-image">
             <img
-              :src="getClientPublicImageUrl('default-event2.jpeg')"
               alt="Cathedral Concert"
+              :src="getClientPublicImageUrl('default-event2.jpeg')"
             >
           </div>
         </div>
@@ -293,8 +293,8 @@ onMounted(() => {
             <div class="sponsor-item">
               <div class="sponsor-placeholder">
                 <v-icon
-                  size="48"
                   color="primary"
+                  size="48"
                 >
                   mdi-heart
                 </v-icon>
@@ -304,8 +304,8 @@ onMounted(() => {
             <div class="sponsor-item">
               <div class="sponsor-placeholder">
                 <v-icon
-                  size="48"
                   color="primary"
+                  size="48"
                 >
                   mdi-music
                 </v-icon>
@@ -315,8 +315,8 @@ onMounted(() => {
             <div class="sponsor-item">
               <div class="sponsor-placeholder">
                 <v-icon
-                  size="48"
                   color="primary"
+                  size="48"
                 >
                   mdi-church
                 </v-icon>
