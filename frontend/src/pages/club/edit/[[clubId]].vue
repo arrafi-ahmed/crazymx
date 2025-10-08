@@ -17,7 +17,7 @@
     },
   })
 
-  const { mobile } = useDisplay()
+  const { xs } = useDisplay()
   const route = useRoute()
   const router = useRouter()
   const store = useStore()
@@ -186,6 +186,7 @@
                   color="primary"
                   :size="xs ? 'default' : 'large'"
                   type="submit"
+                  rounded="xl"
                 >
                   Save
                 </v-btn>

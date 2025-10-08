@@ -24,6 +24,9 @@ declare module 'vue-router/auto-routes' {
     'checkout-slug': RouteRecordInfo<'checkout-slug', '/:slug/checkout', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
     'event-register-success-slug': RouteRecordInfo<'event-register-success-slug', '/:slug/success', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
     'tickets-slug': RouteRecordInfo<'tickets-slug', '/:slug/tickets', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
+    'register': RouteRecordInfo<'register', '/auth/Register', Record<never, never>, Record<never, never>>,
+    'signin': RouteRecordInfo<'signin', '/auth/Signin', Record<never, never>, Record<never, never>>,
+    'signout': RouteRecordInfo<'signout', '/auth/Signout', Record<never, never>, Record<never, never>>,
     '/club/': RouteRecordInfo<'/club/', '/club', Record<never, never>, Record<never, never>>,
     'club-add': RouteRecordInfo<'club-add', '/club/add', Record<never, never>, Record<never, never>>,
     'credential-generate': RouteRecordInfo<'credential-generate', '/club/credential/:clubId', { clubId: ParamValue<true> }, { clubId: ParamValue<false> }>,
@@ -50,11 +53,7 @@ declare module 'vue-router/auto-routes' {
     'extras-purchase': RouteRecordInfo<'extras-purchase', '/ExtrasPurchase', Record<never, never>, Record<never, never>>,
     'form-builder': RouteRecordInfo<'form-builder', '/form-builder', Record<never, never>, Record<never, never>>,
     'not-found': RouteRecordInfo<'not-found', '/NotFound', Record<never, never>, Record<never, never>>,
-    'page-static': RouteRecordInfo<'page-static', '/PageStatic', Record<never, never>, Record<never, never>>,
     'pricing': RouteRecordInfo<'pricing', '/Pricing', Record<never, never>, Record<never, never>>,
-    'register': RouteRecordInfo<'register', '/Register', Record<never, never>, Record<never, never>>,
-    'signin': RouteRecordInfo<'signin', '/Signin', Record<never, never>, Record<never, never>>,
-    'signout': RouteRecordInfo<'signout', '/Signout', Record<never, never>, Record<never, never>>,
   }
 
   /**
@@ -90,6 +89,18 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/[slug]/tickets.vue': {
       routes: 'tickets-slug'
+      views: never
+    }
+    'src/pages/auth/Register.vue': {
+      routes: 'register'
+      views: never
+    }
+    'src/pages/auth/Signin.vue': {
+      routes: 'signin'
+      views: never
+    }
+    'src/pages/auth/Signout.vue': {
+      routes: 'signout'
       views: never
     }
     'src/pages/club/index.vue': {
@@ -196,24 +207,8 @@ declare module 'vue-router/auto-routes' {
       routes: 'not-found'
       views: never
     }
-    'src/pages/PageStatic.vue': {
-      routes: 'page-static'
-      views: never
-    }
     'src/pages/Pricing.vue': {
       routes: 'pricing'
-      views: never
-    }
-    'src/pages/Register.vue': {
-      routes: 'register'
-      views: never
-    }
-    'src/pages/Signin.vue': {
-      routes: 'signin'
-      views: never
-    }
-    'src/pages/Signout.vue': {
-      routes: 'signout'
       views: never
     }
   }
