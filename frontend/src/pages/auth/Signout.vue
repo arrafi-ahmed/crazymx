@@ -16,7 +16,7 @@
     .dispatch('auth/signout')
     .then(res => {
       store.commit('addSnackbar', { text: 'Signout successful!', color: 'success' })
-      window.location.href = '/signin'
+      window.location.href = '/auth/signin'
     })
     .catch(error => {})
 </script>

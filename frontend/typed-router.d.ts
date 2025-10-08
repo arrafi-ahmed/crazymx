@@ -24,6 +24,7 @@ declare module 'vue-router/auto-routes' {
     'checkout-slug': RouteRecordInfo<'checkout-slug', '/:slug/checkout', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
     'event-register-success-slug': RouteRecordInfo<'event-register-success-slug', '/:slug/success', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
     'tickets-slug': RouteRecordInfo<'tickets-slug', '/:slug/tickets', { slug: ParamValue<true> }, { slug: ParamValue<false> }>,
+    '/auth/': RouteRecordInfo<'/auth/', '/auth', Record<never, never>, Record<never, never>>,
     'register': RouteRecordInfo<'register', '/auth/Register', Record<never, never>, Record<never, never>>,
     'signin': RouteRecordInfo<'signin', '/auth/Signin', Record<never, never>, Record<never, never>>,
     'signout': RouteRecordInfo<'signout', '/auth/Signout', Record<never, never>, Record<never, never>>,
@@ -89,6 +90,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/[slug]/tickets.vue': {
       routes: 'tickets-slug'
+      views: never
+    }
+    'src/pages/auth/index.vue': {
+      routes: '/auth/'
       views: never
     }
     'src/pages/auth/Register.vue': {
