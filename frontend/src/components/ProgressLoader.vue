@@ -1,9 +1,9 @@
 <script setup>
-import { useStore } from 'vuex'
-import { computed } from 'vue'
+  import { computed } from 'vue'
+  import { useStore } from 'vuex'
 
-const store = useStore()
-const progress = computed(() => store.state.progress)
+  const store = useStore()
+  const progress = computed(() => store.state.progress)
 </script>
 
 <template>
@@ -12,11 +12,11 @@ const progress = computed(() => store.state.progress)
     style="z-index: 9999"
   >
     <v-progress-linear
-      :active="progress"
-      :height="5"
       absolute
+      :active="progress"
       class="position-fixed"
       color="primary"
+      :height="5"
       indeterminate
       reverse
       rounded

@@ -1,159 +1,181 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+  import { computed, reactive, ref, watch } from 'vue'
 
-// the input data in JSON format
-const { data, step, type } = defineProps({
-  data: {
-    type: Object,
-    default: () => ({}),
-  },
-  step: {
-    type: Number,
-    default: () => ({}),
-  },
-  type: {
-    type: String,
-    default: () => ({}),
-  },
-})
+  // the input data in JSON format
+  const { data, step, type } = defineProps({
+    data: {
+      type: Object,
+      default: () => ({}),
+    },
+    step: {
+      type: Number,
+      default: () => ({}),
+    },
+    type: {
+      type: String,
+      default: () => ({}),
+    },
+  })
 
-const inputValueInit = {
-  startDate: null,
-  startTime: null,
-  endDate: null,
-  endTime: null,
-}
-const inputValue = reactive({ ...inputValueInit })
-
-watch(
-  () => data,
-  (newVal) => {
-    inputValue.startDate = newVal.startDate
-    inputValue.startTime = newVal.startTime
-    inputValue.endDate = newVal.endDate
-    inputValue.endTime = newVal.endTime
-  },
-)
-
-const start = ref(null)
-const end = ref(null)
-
-// the format of the time, either 24-hour or 12-hour
-const format = ref('24')
-
-// the flag to show or hide the picker
-const showStartPicker = ref(false)
-const showEndPicker = ref(false)
-
-const startDate = ref(null)
-const startTime = ref(null)
-const endDate = ref(null)
-const endTime = ref(null)
-
-const setBothPicker = async (value) => {
-  showStartPicker.value = showEndPicker.value = value
-}
-
-// the error message to be displayed if the input is not compatible
-const error = reactive({ start: '', end: '' })
-
-// the validation routine to verify the input data
-const validate = (value, datetimeType) => {
-  // check if the value is empty
-  if (!value) {
-    return 'Please enter a value'
+  const inputValueInit = {
+    startDate: null,
+    startTime: null,
+    endDate: null,
+    endTime: null,
   }
-  // check if the value matches the expected format
-  const regex =
-    type === 'date-time'
-      ? /^\d{4}-\d{2}-\d{2} \d?\d:\d{2}( (AM|PM))?$/
-      : type === 'date'
-        ? /^\d{4}-\d{2}-\d{2}$/
-        : type === 'time'
-          ? /^\d?\d:\d{2}( (AM|PM))?$/
-          : null
-  if (!regex.test(value)) {
-    const msg = 'Please enter a valid date and time'
-    if (datetimeType === 'start') error.start = msg
-    else if (datetimeType === 'end') error.end = msg
+  const inputValue = reactive({ ...inputValueInit })
+
+  watch(
+    () => data,
+    newVal => {
+      inputValue.startDate = newVal.startDate
+      inputValue.startTime = newVal.startTime
+      inputValue.endDate = newVal.endDate
+      inputValue.endTime = newVal.endTime
+    },
+  )
+
+  const start = ref(null)
+  const end = ref(null)
+
+  // the format of the time, either 24-hour or 12-hour
+  const format = ref('24')
+
+  // the flag to show or hide the picker
+  const showStartPicker = ref(false)
+  const showEndPicker = ref(false)
+
+  const startDate = ref(null)
+  const startTime = ref(null)
+  const endDate = ref(null)
+  const endTime = ref(null)
+
+  async function setBothPicker (value) {
+    showStartPicker.value = showEndPicker.value = value
   }
-  return ''
-}
 
-// the function to clear the value and the text box
-const clearValue = (datetimeType) => {
-  Object.assign(inputValue, { ...inputValueInit })
-  if (datetimeType === 'start') start.value = null
-  else if (datetimeType === 'end') end.value = null
-  error.value = ''
-}
+  // the error message to be displayed if the input is not compatible
+  const error = reactive({ start: '', end: '' })
 
-// the function to submit the value and hide the picker
-const submitValue = (datetimeType) => {
-  if (datetimeType === 'start') {
-    if (type === 'date-time') {
-      start.value =
-        inputValue.startDate +
-        ' ' +
-        (format.value === '12' ? convertTo12Hour(inputValue.startTime) : inputValue.startTime)
-    } else if (type === 'date') {
-      start.value = inputValue.startDate
-    } else if (type === 'time') {
-      start.value =
-        format.value === '12' ? convertTo12Hour(inputValue.startTime) : inputValue.startTime
+  // the validation routine to verify the input data
+  function validate (value, datetimeType) {
+    // check if the value is empty
+    if (!value) {
+      return 'Please enter a value'
     }
-    validate(start.value, datetimeType)
+    // check if the value matches the expected format
+    const regex
+      = type === 'date-time'
+        ? /^\d{4}-\d{2}-\d{2} \d?\d:\d{2}( (AM|PM))?$/
+        : type === 'date'
+          ? /^\d{4}-\d{2}-\d{2}$/
+          : type === 'time'
+            ? /^\d?\d:\d{2}( (AM|PM))?$/
+            : null
+    if (!regex.test(value)) {
+      const msg = 'Please enter a valid date and time'
+      if (datetimeType === 'start') error.start = msg
+      else if (datetimeType === 'end') error.end = msg
+    }
+    return ''
+  }
+
+  // the function to clear the value and the text box
+  function clearValue (datetimeType) {
+    Object.assign(inputValue, { ...inputValueInit })
+    if (datetimeType === 'start') start.value = null
+    else if (datetimeType === 'end') end.value = null
+    error.value = ''
+  }
+
+  // the function to submit the value and hide the picker
+  function submitValue (datetimeType) {
+    if (datetimeType === 'start') {
+      switch (type) {
+        case 'date-time': {
+          start.value
+            = inputValue.startDate
+              + ' '
+              + (format.value === '12' ? convertTo12Hour(inputValue.startTime) : inputValue.startTime)
+
+          break
+        }
+        case 'date': {
+          start.value = inputValue.startDate
+
+          break
+        }
+        case 'time': {
+          start.value
+            = format.value === '12' ? convertTo12Hour(inputValue.startTime) : inputValue.startTime
+
+          break
+        }
+      // No default
+      }
+      validate(start.value, datetimeType)
     // showStartPicker.value = false;
-  } else if (datetimeType === 'end') {
-    if (type === 'date-time') {
-      end.value =
-        inputValue.endDate +
-        ' ' +
-        (format.value === '12' ? convertTo12Hour(inputValue.endTime) : inputValue.endTime)
-    } else if (type === 'date') {
-      end.value = inputValue.endDate
-    } else if (type === 'time') {
-      end.value = format.value === '12' ? convertTo12Hour(inputValue.endTime) : inputValue.endTime
+    } else if (datetimeType === 'end') {
+      switch (type) {
+        case 'date-time': {
+          end.value
+            = inputValue.endDate
+              + ' '
+              + (format.value === '12' ? convertTo12Hour(inputValue.endTime) : inputValue.endTime)
+
+          break
+        }
+        case 'date': {
+          end.value = inputValue.endDate
+
+          break
+        }
+        case 'time': {
+          end.value = format.value === '12' ? convertTo12Hour(inputValue.endTime) : inputValue.endTime
+
+          break
+        }
+      // No default
+      }
+      validate(start.value, datetimeType)
+      setBothPicker(false)
     }
-    validate(start.value, datetimeType)
-    setBothPicker(false)
   }
-}
 
-// the function to convert a 24-hour time to a 12-hour time
-const convertTo12Hour = (time) => {
-  const hour = Number(time.split(':')[0])
-  const minute = Number(time.split(':')[1])
-  const period = hour < 12 ? 'AM' : 'PM'
-  const hour12 = hour % 12 || 12
-  return hour12 + ':' + minute + ' ' + period
-}
+  // the function to convert a 24-hour time to a 12-hour time
+  function convertTo12Hour (time) {
+    const hour = Number(time.split(':')[0])
+    const minute = Number(time.split(':')[1])
+    const period = hour < 12 ? 'AM' : 'PM'
+    const hour12 = hour % 12 || 12
+    return hour12 + ':' + minute + ' ' + period
+  }
 
-// watch the value changes and validate them
-watch(start.value, (newValue) => {
-  validate(newValue, 'start')
-})
-watch(end.value, (newValue) => {
-  validate(newValue, 'end')
-})
-const startLabel = computed(() =>
-  type === 'date-time'
-    ? 'Start Date-Time'
-    : type === 'date'
-      ? 'Start Date'
-      : type === 'time'
-        ? 'Start Time'
-        : null,
-)
-const endLabel = computed(() =>
-  type === 'date-time'
-    ? 'End Date-Time'
-    : type === 'date'
-      ? 'End Date'
-      : type === 'time'
-        ? 'End Time'
-        : null,
-)
+  // watch the value changes and validate them
+  watch(start.value, newValue => {
+    validate(newValue, 'start')
+  })
+  watch(end.value, newValue => {
+    validate(newValue, 'end')
+  })
+  const startLabel = computed(() =>
+    type === 'date-time'
+      ? 'Start Date-Time'
+      : type === 'date'
+        ? 'Start Date'
+        : type === 'time'
+          ? 'Start Time'
+          : null,
+  )
+  const endLabel = computed(() =>
+    type === 'date-time'
+      ? 'End Date-Time'
+      : type === 'date'
+        ? 'End Date'
+        : type === 'time'
+          ? 'End Time'
+          : null,
+  )
 </script>
 <template>
   <!--  start date-time-->

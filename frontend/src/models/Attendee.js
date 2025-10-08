@@ -2,7 +2,7 @@
  * Attendee model class
  */
 export class Attendee {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.registrationId = data.registrationId || null
     this.isPrimary = data.isPrimary || false
@@ -20,62 +20,66 @@ export class Attendee {
   /**
    * Get full name
    */
-  getFullName() {
+  getFullName () {
     return `${this.firstName} ${this.lastName}`.trim()
   }
 
   /**
    * Get display name (first name + last initial)
    */
-  getDisplayName() {
-    if (!this.lastName) return this.firstName
+  getDisplayName () {
+    if (!this.lastName) {
+      return this.firstName
+    }
     return `${this.firstName} ${this.lastName.charAt(0)}.`
   }
 
   /**
    * Check if attendee is primary
    */
-  isPrimary() {
+  isPrimary () {
     return this.isPrimary === true
   }
 
   /**
    * Check if attendee has a ticket
    */
-  hasTicket() {
+  hasTicket () {
     return this.ticketId !== null
   }
 
   /**
    * Check if attendee has phone number
    */
-  hasPhone() {
+  hasPhone () {
     return this.phone && this.phone.trim().length > 0
   }
 
   /**
    * Check if attendee has QR code
    */
-  hasQrCode() {
+  hasQrCode () {
     return this.qrUuid && this.qrUuid.trim().length > 0
   }
 
   /**
    * Generate a simple QR code identifier
    */
-  generateQrIdentifier() {
-    if (this.qrUuid) return this.qrUuid
+  generateQrIdentifier () {
+    if (this.qrUuid) {
+      return this.qrUuid
+    }
 
     // Simple fallback - in real app, use proper UUID generation
     const timestamp = Date.now()
-    const random = Math.random().toString(36).substring(2, 8)
+    const random = Math.random().toString(36).slice(2, 8)
     return `QR_${timestamp}_${random}`
   }
 
   /**
    * Validates the attendee data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.registrationId) {
@@ -127,7 +131,7 @@ export class Attendee {
   /**
    * Simple email validation
    */
-  isValidEmail(email) {
+  isValidEmail (email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
@@ -135,7 +139,7 @@ export class Attendee {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       registrationId: this.registrationId,

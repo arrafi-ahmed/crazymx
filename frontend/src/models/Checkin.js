@@ -2,7 +2,7 @@
  * Checkin model class
  */
 export class Checkin {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.attendeeId = data.attendeeId || null
     this.registrationId = data.registrationId || null
@@ -13,15 +13,17 @@ export class Checkin {
   /**
    * Check if checkin has a user who performed it
    */
-  hasCheckedInBy() {
+  hasCheckedInBy () {
     return this.checkedInBy !== null
   }
 
   /**
    * Get checkin time as a formatted string
    */
-  getCheckinTime() {
-    if (!this.createdAt) return 'Unknown'
+  getCheckinTime () {
+    if (!this.createdAt) {
+      return 'Unknown'
+    }
 
     const date = new Date(this.createdAt)
     return date.toLocaleString()
@@ -30,8 +32,10 @@ export class Checkin {
   /**
    * Check if checkin is recent (within last hour)
    */
-  isRecent() {
-    if (!this.createdAt) return false
+  isRecent () {
+    if (!this.createdAt) {
+      return false
+    }
 
     const checkinTime = new Date(this.createdAt)
     const now = new Date()
@@ -43,8 +47,10 @@ export class Checkin {
   /**
    * Check if checkin is today
    */
-  isToday() {
-    if (!this.createdAt) return false
+  isToday () {
+    if (!this.createdAt) {
+      return false
+    }
 
     const checkinDate = new Date(this.createdAt)
     const today = new Date()
@@ -55,8 +61,10 @@ export class Checkin {
   /**
    * Get checkin date as string
    */
-  getCheckinDate() {
-    if (!this.createdAt) return 'Unknown'
+  getCheckinDate () {
+    if (!this.createdAt) {
+      return 'Unknown'
+    }
 
     const date = new Date(this.createdAt)
     return date.toDateString()
@@ -65,7 +73,7 @@ export class Checkin {
   /**
    * Validates the checkin data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.attendeeId) {
@@ -85,7 +93,7 @@ export class Checkin {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       attendeeId: this.attendeeId,

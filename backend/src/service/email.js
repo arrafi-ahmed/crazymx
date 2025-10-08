@@ -198,12 +198,12 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
             attendeeId: primary.id,
             qrUuid: primary.qrUuid,
         });
-        attachments.push({ type: 'qrcode', content: qrCodeMain, cid: 'qrCodeMain' });
+        attachments.push({type: 'qrcode', content: qrCodeMain, cid: 'qrCodeMain'});
 
         // Extras QR if applicable
         if (extrasPurchase?.id && extrasPurchase.extrasData?.length) {
-            const qrCodeExtras = await generateQrCode({ id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid });
-            attachments.push({ type: 'qrcode', content: qrCodeExtras, cid: 'qrCodeExtras' });
+            const qrCodeExtras = await generateQrCode({id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid});
+            attachments.push({type: 'qrcode', content: qrCodeExtras, cid: 'qrCodeExtras'});
         }
 
         const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
@@ -241,7 +241,7 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
             totalAttendees,
             successfulEmails: 1,
             failedEmails: 0,
-            results: [{ attendeeId: primary.id, email: primary.email, messageId: sent.messageId, success: true }],
+            results: [{attendeeId: primary.id, email: primary.email, messageId: sent.messageId, success: true}],
         };
     }
 

@@ -2,7 +2,7 @@
  * Registration model class
  */
 export class Registration {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.eventId = data.eventId || null
     this.additionalFields = data.additionalFields || null
@@ -14,21 +14,21 @@ export class Registration {
   /**
    * Check if registration is confirmed
    */
-  isConfirmed() {
+  isConfirmed () {
     return this.status === true
   }
 
   /**
    * Check if registration is pending
    */
-  isPending() {
+  isPending () {
     return this.status === false
   }
 
   /**
    * Confirm the registration
    */
-  confirm() {
+  confirm () {
     this.status = true
     this.updatedAt = new Date()
   }
@@ -36,7 +36,7 @@ export class Registration {
   /**
    * Set registration as pending
    */
-  setPending() {
+  setPending () {
     this.status = false
     this.updatedAt = new Date()
   }
@@ -44,15 +44,17 @@ export class Registration {
   /**
    * Get additional field value
    */
-  getAdditionalField(key) {
-    if (!this.additionalFields) return null
+  getAdditionalField (key) {
+    if (!this.additionalFields) {
+      return null
+    }
     return this.additionalFields[key]
   }
 
   /**
    * Set additional field value
    */
-  setAdditionalField(key, value) {
+  setAdditionalField (key, value) {
     if (!this.additionalFields) {
       this.additionalFields = {}
     }
@@ -63,14 +65,14 @@ export class Registration {
   /**
    * Check if registration has additional fields
    */
-  hasAdditionalFields() {
+  hasAdditionalFields () {
     return this.additionalFields && Object.keys(this.additionalFields).length > 0
   }
 
   /**
    * Validates the registration data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.eventId) {
@@ -90,7 +92,7 @@ export class Registration {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       eventId: this.eventId,

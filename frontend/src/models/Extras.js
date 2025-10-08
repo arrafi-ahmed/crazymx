@@ -1,7 +1,7 @@
 import ExtrasItem from './ExtrasItem'
 
 export default class Extras {
-  constructor({
+  constructor ({
     name = null,
     description = null,
     price = null,

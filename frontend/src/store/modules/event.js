@@ -9,69 +9,66 @@ export const state = {
 }
 
 export const mutations = {
-  setEvents(state, payload) {
+  setEvents (state, payload) {
     state.events = payload
   },
-  setEvent(state, payload) {
+  setEvent (state, payload) {
     state.event = payload
-    localStorage.setItem('currentEvent', JSON.stringify(payload))
   },
-  saveEvent(state, payload) {
-    const foundIndex = state.events.findIndex((item) => item.id == payload.id)
-    if (foundIndex !== -1) {
-      state.events[foundIndex] = payload
-    } else {
+  saveEvent (state, payload) {
+    const foundIndex = state.events.findIndex(item => item.id == payload.id)
+    if (foundIndex === -1) {
       state.events.unshift(payload)
-    }
-  },
-  saveExtras(state, payload) {
-    const foundIndex = state.extras.findIndex((item) => item.id == payload.id)
-    if (foundIndex !== -1) {
-      state.extras[foundIndex] = payload
     } else {
-      state.extras.unshift(payload)
+      state.events[foundIndex] = payload
     }
   },
-  removeEvent(state, payload) {
-    const foundIndex = state.events.findIndex((item) => item.id == payload.eventId)
+  saveExtras (state, payload) {
+    const foundIndex = state.extras.findIndex(item => item.id == payload.id)
+    if (foundIndex === -1) {
+      state.extras.unshift(payload)
+    } else {
+      state.extras[foundIndex] = payload
+    }
+  },
+  removeEvent (state, payload) {
+    const foundIndex = state.events.findIndex(item => item.id == payload.eventId)
     if (foundIndex !== -1) {
       state.events.splice(foundIndex, 1)
     }
   },
-  removeExtras(state, payload) {
-    const foundIndex = state.extras.findIndex((item) => item.id == payload.extrasId)
+  removeExtras (state, payload) {
+    const foundIndex = state.extras.findIndex(item => item.id == payload.extrasId)
     if (foundIndex !== -1) {
       state.extras.splice(foundIndex, 1)
     }
   },
-  setExtras(state, payload) {
+  setExtras (state, payload) {
     state.extras = payload
   },
-  clearEvent(state) {
+  clearEvent (state) {
     state.event = {}
-    localStorage.removeItem('currentEvent')
   },
-  clearEvents(state) {
+  clearEvents (state) {
     state.events = []
-    localStorage.removeItem('events')
   },
 }
 
 export const actions = {
-  setEvents({ commit }, request) {
+  setEvents ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getAllEvents', { params: { clubId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setEvents', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setActiveEvents({ commit }, request) {
+  setActiveEvents ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getAllActiveEvents', {
@@ -80,173 +77,174 @@ export const actions = {
             currentDate: request.currentDate,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setEvents', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setEvent({ commit }, request) {
+  setEvent ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getEvent', {
           params: { eventId: request.eventId },
         })
-        .then((response) => {
+        .then(response => {
           commit('setEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setEventBySlug({ commit }, request) {
+  setEventBySlug ({ commit }, request) {
     return new Promise((resolve, reject) => {
+      console.log(55, request)
       $axios
         .get('/event/getEventBySlug', {
-          params: { slug: request.slug },
+          params: { slug: request },
         })
-        .then((response) => {
+        .then(response => {
           commit('setEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  getFirstEvent({ commit }) {
+  getFirstEvent ({ commit }) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getFirstEvent')
-        .then((response) => {
+        .then(response => {
           commit('setEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setEventByEventIdnClubId({ commit }, request) {
+  setEventByEventIdnClubId ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getEventByEventIdnClubId', {
           params: { eventId: request.eventId, clubId: request.clubId },
         })
-        .then((response) => {
+        .then(response => {
           commit('setEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  save({ commit }, request) {
+  save ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/save', request)
-        .then((response) => {
+        .then(response => {
           commit('saveEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  saveConfig({ commit }, request) {
+  saveConfig ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/saveConfig', request)
-        .then((response) => {
+        .then(response => {
           commit('saveEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  saveLandingConfig({ commit }, request) {
+  saveLandingConfig ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/saveLandingConfig', request)
-        .then((response) => {
+        .then(response => {
           commit('saveEvent', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  removeEvent({ commit }, request) {
+  removeEvent ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/removeEvent', {
           params: request,
         })
-        .then((response) => {
+        .then(response => {
           commit('removeEvent', request)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  removeExtras({ commit }, request) {
+  removeExtras ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/removeExtras', {
           params: { extrasId: request.extrasId, eventId: request.eventId },
         })
-        .then((response) => {
+        .then(response => {
           commit('removeExtras', request)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  saveExtras({ commit }, request) {
+  saveExtras ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/event/saveExtras', request)
-        .then((response) => {
+        .then(response => {
           commit('saveExtras', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setExtras({ commit }, request) {
+  setExtras ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/event/getExtras', { params: { eventId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setExtras', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 }
 
 export const getters = {
-  getEventById: (state) => (id) => {
-    return state.events.find((item) => item.id == id)
+  getEventById: state => id => {
+    return state.events.find(item => item.id == id)
   },
   isEventFree: () => {},
 }

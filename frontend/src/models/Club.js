@@ -2,7 +2,7 @@
  * Club model class
  */
 export class Club {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.name = data.name || ''
     this.location = data.location || null
@@ -12,7 +12,7 @@ export class Club {
   /**
    * Validates the club data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.name || this.name.trim().length === 0) {
@@ -36,7 +36,7 @@ export class Club {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       name: this.name,

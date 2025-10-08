@@ -1,4 +1,4 @@
-//only UN members
+// only UN members
 export const countries = [
   { name: 'Afghanistan', code: 'AF', dialCode: '+93', flag: '🇦🇫' },
   { name: 'Albania', code: 'AL', dialCode: '+355', flag: '🇦🇱' },
@@ -44,7 +44,7 @@ export const countries = [
   { name: 'Comoros', code: 'KM', dialCode: '+269', flag: '🇰🇲' },
   { name: 'Congo', code: 'CG', dialCode: '+242', flag: '🇨🇬' },
   { name: 'Costa Rica', code: 'CR', dialCode: '+506', flag: '🇨🇷' },
-  { name: "Côte d'Ivoire", code: 'CI', dialCode: '+225', flag: '🇨🇮' },
+  { name: 'Côte d\'Ivoire', code: 'CI', dialCode: '+225', flag: '🇨🇮' },
   { name: 'Croatia', code: 'HR', dialCode: '+385', flag: '🇭🇷' },
   { name: 'Cuba', code: 'CU', dialCode: '+53', flag: '🇨🇺' },
   { name: 'Cyprus', code: 'CY', dialCode: '+357', flag: '🇨🇾' },
@@ -212,7 +212,7 @@ export const countries = [
   { name: 'Zimbabwe', code: 'ZW', dialCode: '+263', flag: '🇿🇼' },
 ]
 
-//include non UN member
+// include non UN member
 export const allCountries = [
   { name: 'Afghanistan', code: 'AF', dialCode: '+93', flag: '🇦🇫' },
   { name: 'Åland Islands', code: 'AX', dialCode: '+358', flag: '🇦🇽' },
@@ -275,7 +275,7 @@ export const allCountries = [
   { name: 'Congo', code: 'CG', dialCode: '+242', flag: '🇨🇬' },
   { name: 'Cook Islands', code: 'CK', dialCode: '+682', flag: '🇨🇰' },
   { name: 'Costa Rica', code: 'CR', dialCode: '+506', flag: '🇨🇷' },
-  { name: "Côte d'Ivoire", code: 'CI', dialCode: '+225', flag: '🇨🇮' },
+  { name: 'Côte d\'Ivoire', code: 'CI', dialCode: '+225', flag: '🇨🇮' },
   { name: 'Croatia', code: 'HR', dialCode: '+385', flag: '🇭🇷' },
   { name: 'Cuba', code: 'CU', dialCode: '+53', flag: '🇨🇺' },
   { name: 'Curaçao', code: 'CW', dialCode: '+599', flag: '🇨🇼' },

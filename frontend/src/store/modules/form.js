@@ -7,13 +7,13 @@ export const state = {
 }
 
 export const mutations = {
-  setFormQuestions(state, payload) {
+  setFormQuestions (state, payload) {
     state.formQuestions = payload
   },
 }
 
 export const actions = {
-  setFormQuestions({ commit }, request) {
+  setFormQuestions ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/form/getFormQuestions', {
@@ -21,24 +21,24 @@ export const actions = {
             eventId: request.eventId,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setFormQuestions', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  save({ commit }, request) {
+  save ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/form/save', { payload: request })
-        .then((response) => {
+        .then(response => {
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },

@@ -1,29 +1,29 @@
 <script setup>
-import { defineEmits, defineProps, ref, watch } from 'vue'
-import { getInputType } from '@/others/util'
+  import { defineEmits, defineProps, ref, watch } from 'vue'
+  import { getInputType } from '@/others/util'
 
-const { items } = defineProps(['items'])
-const inputResponses = ref([])
-const emit = defineEmits(['update', 'remove'])
+  const { items } = defineProps(['items'])
+  const inputResponses = ref([])
+  const emit = defineEmits(['update', 'remove'])
 
-watch(
-  () => items,
-  (newItems) => {
-    inputResponses.value = newItems
-  },
-  { immediate: true },
-)
+  watch(
+    () => items,
+    newItems => {
+      inputResponses.value = newItems
+    },
+    { immediate: true },
+  )
 
-watch(
-  () => inputResponses.value,
-  (newVal) => {
-    emit('update', { newVal })
-  },
-)
+  watch(
+    () => inputResponses.value,
+    newVal => {
+      emit('update', { newVal })
+    },
+  )
 
-const removeQuestion = (qId, index) => {
-  emit('remove', qId, index)
-}
+  function removeQuestion (qId, index) {
+    emit('remove', qId, index)
+  }
 </script>
 
 <template>
@@ -37,8 +37,8 @@ const removeQuestion = (qId, index) => {
     >
       <div
         v-if="item.options && item.options.length > 0"
-        :class="{ 'mt-5': index > 0 }"
         class="border rounded pa-4"
+        :class="{ 'mt-5': index > 0 }"
       >
         <v-row
           justify="space-between"
@@ -79,11 +79,11 @@ const removeQuestion = (qId, index) => {
 
         <v-text-field
           v-model="inputResponses[index].text"
-          :rules="[(v) => !!v || !item.required || 'required']"
           class="mt-2 mt-md-4"
           density="compact"
           hide-details="auto"
           label="Question text"
+          :rules="[(v) => !!v || !item.required || 'required']"
         />
 
         <div
@@ -108,11 +108,11 @@ const removeQuestion = (qId, index) => {
             <div class="d-flex align-center">
               <v-text-field
                 v-model="inputResponses[index].options[childIndex]"
-                :label="`Option ${childIndex + 1}`"
-                :rules="[(v) => !!v || 'required']"
                 class="mt-2 mt-md-4"
                 density="compact"
                 hide-details="auto"
+                :label="`Option ${childIndex + 1}`"
+                :rules="[(v) => !!v || 'required']"
               />
               <v-btn
                 class="mt-3"
@@ -128,8 +128,8 @@ const removeQuestion = (qId, index) => {
       </div>
       <div
         v-else
-        :class="{ 'mt-5': index > 0 }"
         class="border rounded pa-4"
+        :class="{ 'mt-5': index > 0 }"
       >
         <v-row
           justify="space-between"
@@ -169,11 +169,11 @@ const removeQuestion = (qId, index) => {
         </v-row>
         <v-text-field
           v-model="inputResponses[index].text"
-          :rules="[(v) => !!v || !item.required || 'required']"
           class="mt-2 mt-md-4"
           density="compact"
           hide-details="auto"
           label="Question text"
+          :rules="[(v) => !!v || !item.required || 'required']"
         />
       </div>
     </template>

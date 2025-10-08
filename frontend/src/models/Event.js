@@ -2,7 +2,7 @@
  * Event model class
  */
 export class Event {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.name = data.name || ''
     this.description = data.description || ''
@@ -18,7 +18,7 @@ export class Event {
     this.taxType = data.taxType || null
     this.clubId = data.clubId || null
     this.createdBy = data.createdBy || null
-    
+
     // Configuration fields
     this.config = data.config || {
       maxTicketsPerRegistration: 10,
@@ -30,8 +30,10 @@ export class Event {
   /**
    * Check if event is currently active (between start and end dates)
    */
-  isActive() {
-    if (!this.startDate || !this.endDate) return false
+  isActive () {
+    if (!this.startDate || !this.endDate) {
+      return false
+    }
 
     const now = new Date()
     const start = new Date(this.startDate)
@@ -43,8 +45,10 @@ export class Event {
   /**
    * Check if event is upcoming
    */
-  isUpcoming() {
-    if (!this.startDate) return false
+  isUpcoming () {
+    if (!this.startDate) {
+      return false
+    }
 
     const now = new Date()
     const start = new Date(this.startDate)
@@ -55,8 +59,10 @@ export class Event {
   /**
    * Check if event is past
    */
-  isPast() {
-    if (!this.endDate) return false
+  isPast () {
+    if (!this.endDate) {
+      return false
+    }
 
     const now = new Date()
     const end = new Date(this.endDate)
@@ -67,8 +73,10 @@ export class Event {
   /**
    * Generate a URL-friendly slug from the event name
    */
-  generateSlug() {
-    if (!this.name) return ''
+  generateSlug () {
+    if (!this.name) {
+      return ''
+    }
 
     return this.name
       .toLowerCase()
@@ -81,7 +89,7 @@ export class Event {
   /**
    * Validates the event data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.name || this.name.trim().length === 0) {
@@ -129,7 +137,7 @@ export class Event {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       name: this.name,

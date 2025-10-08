@@ -2,7 +2,7 @@
  * AppUser model class
  */
 export class AppUser {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.fullName = data.fullName || ''
     this.email = data.email || ''
@@ -15,7 +15,7 @@ export class AppUser {
   /**
    * Role constants
    */
-  static get ROLES() {
+  static get ROLES () {
     return {
       SUDO: 10,
       ADMIN: 20,
@@ -25,42 +25,45 @@ export class AppUser {
   /**
    * Check if user is sudo (super admin)
    */
-  isSudo() {
+  isSudo () {
     return this.role === AppUser.ROLES.SUDO
   }
 
   /**
    * Check if user is admin
    */
-  isAdmin() {
+  isAdmin () {
     return this.role === AppUser.ROLES.ADMIN
   }
 
   /**
    * Get role name as string
    */
-  getRoleName() {
+  getRoleName () {
     switch (this.role) {
-      case AppUser.ROLES.SUDO:
+      case AppUser.ROLES.SUDO: {
         return 'Super Admin'
-      case AppUser.ROLES.ADMIN:
+      }
+      case AppUser.ROLES.ADMIN: {
         return 'Admin'
-      default:
+      }
+      default: {
         return 'Unknown'
+      }
     }
   }
 
   /**
    * Check if user has admin privileges
    */
-  hasAdminPrivileges() {
+  hasAdminPrivileges () {
     return this.isSudo() || this.isAdmin()
   }
 
   /**
    * Validates the user data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.email || this.email.trim().length === 0) {
@@ -96,7 +99,7 @@ export class AppUser {
   /**
    * Simple email validation
    */
-  isValidEmail(email) {
+  isValidEmail (email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
@@ -104,7 +107,7 @@ export class AppUser {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       fullName: this.fullName,

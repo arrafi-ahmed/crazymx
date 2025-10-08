@@ -12,31 +12,31 @@ export const state = {
 }
 
 export const mutations = {
-  setStatistics(state, payload) {
+  setStatistics (state, payload) {
     Object.assign(state.statistics, payload)
   },
 }
 
 export const actions = {
-  scanByRegistrationId({ commit }, request) {
+  scanByRegistrationId ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/checkin/scanByRegistrationId', { payload: request })
-        .then((response) => {
+        .then(response => {
           // commit("setRegistration", response.data?.payload?.checkinResult);
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 
-  save({ commit }, request) {
+  save ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/checkin/save', request)
-        .then((response) => {
+        .then(response => {
           commit(
             'registration/updateAttendee',
             {
@@ -48,17 +48,17 @@ export const actions = {
           )
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 
-  delete({ commit }, request) {
+  delete ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .delete('/checkin/delete', { data: request })
-        .then((response) => {
+        .then(response => {
           // Update the attendee's checkin status in the registration store
           commit(
             'registration/updateAttendee',
@@ -71,23 +71,23 @@ export const actions = {
           )
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setStatistics({ commit }, request) {
+  setStatistics ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/checkin/getStatistics', {
           params: { eventId: request.eventId, date: request.date },
         })
-        .then((response) => {
+        .then(response => {
           commit('setStatistics', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },

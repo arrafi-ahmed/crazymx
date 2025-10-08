@@ -2,7 +2,7 @@
  * Sponsorship model class
  */
 export class Sponsorship {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.sponsorData = data.sponsorData || null
     this.packageType = data.packageType || ''
@@ -20,7 +20,7 @@ export class Sponsorship {
   /**
    * Payment status constants
    */
-  static get PAYMENT_STATUSES() {
+  static get PAYMENT_STATUSES () {
     return {
       PENDING: 'pending',
       PAID: 'paid',
@@ -32,7 +32,7 @@ export class Sponsorship {
   /**
    * Common currencies
    */
-  static get CURRENCIES() {
+  static get CURRENCIES () {
     return {
       USD: 'USD',
       EUR: 'EUR',
@@ -46,131 +46,139 @@ export class Sponsorship {
   /**
    * Check if sponsorship is pending
    */
-  isPending() {
+  isPending () {
     return this.paymentStatus === Sponsorship.PAYMENT_STATUSES.PENDING
   }
 
   /**
    * Check if sponsorship is paid
    */
-  isPaid() {
+  isPaid () {
     return this.paymentStatus === Sponsorship.PAYMENT_STATUSES.PAID
   }
 
   /**
    * Check if sponsorship failed
    */
-  isFailed() {
+  isFailed () {
     return this.paymentStatus === Sponsorship.PAYMENT_STATUSES.FAILED
   }
 
   /**
    * Check if sponsorship is refunded
    */
-  isRefunded() {
+  isRefunded () {
     return this.paymentStatus === Sponsorship.PAYMENT_STATUSES.REFUNDED
   }
 
   /**
    * Check if sponsorship is completed (paid)
    */
-  isCompleted() {
+  isCompleted () {
     return this.isPaid()
   }
 
   /**
    * Check if sponsorship has Stripe payment intent
    */
-  hasStripePaymentIntent() {
+  hasStripePaymentIntent () {
     return this.stripePaymentIntentId !== null
   }
 
   /**
    * Check if sponsorship has sponsor data
    */
-  hasSponsorData() {
+  hasSponsorData () {
     return this.sponsorData && Object.keys(this.sponsorData).length > 0
   }
 
   /**
    * Get sponsor data field
    */
-  getSponsorField(key) {
-    if (!this.hasSponsorData()) return null
+  getSponsorField (key) {
+    if (!this.hasSponsorData()) {
+      return null
+    }
     return this.sponsorData[key]
   }
 
   /**
    * Get sponsor name
    */
-  getSponsorName() {
+  getSponsorName () {
     return this.getSponsorField('name') || 'Unknown Sponsor'
   }
 
   /**
    * Get sponsor email
    */
-  getSponsorEmail() {
+  getSponsorEmail () {
     return this.getSponsorField('email') || null
   }
 
   /**
    * Get sponsor organization
    */
-  getSponsorOrganization() {
+  getSponsorOrganization () {
     return this.getSponsorField('organization') || null
   }
 
   /**
    * Get amount in cents
    */
-  getAmountInCents() {
+  getAmountInCents () {
     return this.amount
   }
 
   /**
    * Get amount in dollars
    */
-  getAmountInDollars() {
+  getAmountInDollars () {
     return this.amount / 100
   }
 
   /**
    * Format amount for display
    */
-  formatAmount() {
-    if (this.amount === 0) return 'Free'
+  formatAmount () {
+    if (this.amount === 0) {
+      return 'Free'
+    }
 
     switch (this.currency) {
-      case 'USD':
+      case 'USD': {
         return `$${this.getAmountInDollars().toFixed(2)}`
-      case 'EUR':
+      }
+      case 'EUR': {
         return `€${this.getAmountInDollars().toFixed(2)}`
-      case 'GBP':
+      }
+      case 'GBP': {
         return `£${this.getAmountInDollars().toFixed(2)}`
-      default:
+      }
+      default: {
         return `${this.getAmountInDollars().toFixed(2)} ${this.currency}`
+      }
     }
   }
 
   /**
    * Check if sponsorship is free
    */
-  isFree() {
+  isFree () {
     return this.amount === 0
   }
 
   /**
    * Check if sponsorship is linked to a registration
    */
-  hasRegistration() {
+  hasRegistration () {
     return this.registrationId !== null
   }
 
   /**
    * Validates the sponsorship data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.sponsorData || typeof this.sponsorData !== 'object') {
@@ -194,8 +202,8 @@ export class Sponsorship {
     }
 
     if (
-      !this.paymentStatus ||
-      !Object.values(Sponsorship.PAYMENT_STATUSES).includes(this.paymentStatus)
+      !this.paymentStatus
+      || !Object.values(Sponsorship.PAYMENT_STATUSES).includes(this.paymentStatus)
     ) {
       errors.push('Invalid payment status')
     }
@@ -217,7 +225,7 @@ export class Sponsorship {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       sponsorData: this.sponsorData,

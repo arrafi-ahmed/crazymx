@@ -1,14 +1,14 @@
 <script setup>
-const props = defineProps({
-  title: {
-    type: String,
-    default: 'No items found',
-  },
-  message: {
-    type: String,
-    default: 'No items available at the moment.',
-  },
-})
+  const props = defineProps({
+    title: {
+      type: String,
+      default: 'No items found',
+    },
+    message: {
+      type: String,
+      default: 'No items available at the moment.',
+    },
+  })
 </script>
 
 <template>

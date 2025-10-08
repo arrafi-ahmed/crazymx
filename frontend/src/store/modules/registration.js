@@ -1,6 +1,6 @@
-import $axios from '@/plugins/axios'
 import fileSaver from 'file-saver'
 import { deepMerge } from '@/others/util'
+import $axios from '@/plugins/axios'
 
 export const namespaced = true
 
@@ -10,37 +10,37 @@ export const state = {
 }
 
 export const mutations = {
-  setRegistration(state, payload) {
+  setRegistration (state, payload) {
     state.registration = payload
   },
-  resetRegistration(state) {
+  resetRegistration (state) {
     state.registration = {}
   },
-  setAttendees(state, payload) {
+  setAttendees (state, payload) {
     state.attendees = payload
   },
-  updateAttendee(state, payload) {
+  updateAttendee (state, payload) {
     // Find attendee by registrationId (for backward compatibility) or attendeeId
     let foundIndex = state.attendees.findIndex(
-      (item) => item.registrationId == payload.registrationId,
+      item => item.registrationId == payload.registrationId,
     )
 
     // If not found by registrationId, try to find by attendeeId
     if (foundIndex === -1 && payload.attendeeId) {
-      foundIndex = state.attendees.findIndex((item) => item.attendeeId == payload.attendeeId)
+      foundIndex = state.attendees.findIndex(item => item.attendeeId == payload.attendeeId)
     }
 
     if (foundIndex !== -1) {
       deepMerge(state.attendees[foundIndex], payload)
     }
   },
-  removeRegistration(state, payload) {
+  removeRegistration (state, payload) {
     // Remove all attendees that belong to the deleted registration
-    const filteredAttendees = state.attendees.filter((item) => item.registrationId != payload)
+    const filteredAttendees = state.attendees.filter(item => item.registrationId != payload)
     state.attendees = filteredAttendees
   },
-  removeAttendee(state, attendeeId) {
-    const foundIndex = state.attendees.findIndex((item) => item.attendeeId == attendeeId)
+  removeAttendee (state, attendeeId) {
+    const foundIndex = state.attendees.findIndex(item => item.attendeeId == attendeeId)
     if (foundIndex !== -1) {
       state.attendees.splice(foundIndex, 1)
     }
@@ -48,45 +48,45 @@ export const mutations = {
 }
 
 export const actions = {
-  bulkImportAttendee({ commit }, request) {
+  bulkImportAttendee ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/registration/bulkImportAttendee', request)
-        .then((response) => {
+        .then(response => {
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  initRegistration({ commit }, request) {
+  initRegistration ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/registration/initRegistration', request)
-        .then((response) => {
+        .then(response => {
           commit('setRegistration', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  saveRegistration({ commit }, request) {
+  saveRegistration ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/registration/save', request)
-        .then((response) => {
+        .then(response => {
           commit('setRegistration', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setRegistration({ commit }, request) {
+  setRegistration ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/getRegistration', {
@@ -95,16 +95,16 @@ export const actions = {
             qrUuid: request.qrUuid,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setRegistration', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  getRegistrationById({ commit }, request) {
+  getRegistrationById ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/getRegistrationById', {
@@ -112,16 +112,16 @@ export const actions = {
             registrationId: request.registrationId,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setRegistration', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  getRegistrationByEmail({ commit }, request) {
+  getRegistrationByEmail ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/getRegistrationByEmail', {
@@ -130,16 +130,16 @@ export const actions = {
             eventId: request.eventId,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setRegistration', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setAttendees({ commit }, request) {
+  setAttendees ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/getAttendees', {
@@ -149,16 +149,16 @@ export const actions = {
             sortBy: request?.sortBy,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('setAttendees', response.data?.payload)
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  downloadAttendees({ commit }, request) {
+  downloadAttendees ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/downloadAttendees', {
@@ -167,7 +167,7 @@ export const actions = {
           },
           responseType: 'blob',
         })
-        .then((response) => {
+        .then(response => {
           const filename = `Attendee-report-event-${
             request.eventId
           }-${new Date().toISOString().slice(0, 19)}.xlsx`
@@ -176,12 +176,12 @@ export const actions = {
           fileSaver.saveAs(blob, filename)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  sendTicketByAttendeeId({ commit }, request) {
+  sendTicketByAttendeeId ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/sendTicketByAttendeeId', {
@@ -190,15 +190,15 @@ export const actions = {
             eventId: request.eventId,
           },
         })
-        .then((response) => {
+        .then(response => {
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  removeRegistration({ commit }, request) {
+  removeRegistration ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/registration/removeRegistration', {
@@ -207,16 +207,16 @@ export const actions = {
             eventId: request.eventId,
           },
         })
-        .then((response) => {
+        .then(response => {
           commit('removeRegistration', request.registrationId)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  deleteAttendee({ commit }, request) {
+  deleteAttendee ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get(`/registration/deleteAttendee`, {
@@ -225,7 +225,7 @@ export const actions = {
             eventId: request.eventId,
           },
         })
-        .then((response) => {
+        .then(response => {
           // Update the store based on what was deleted
           if (response.data?.payload?.deletedRegistration) {
             // If entire registration was deleted, remove it
@@ -236,35 +236,35 @@ export const actions = {
           }
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 
-  updateStatus({ commit }, request) {
+  updateStatus ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/registration/updateStatus', request)
-        .then((response) => {
+        .then(response => {
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 
-  scanByExtrasPurchaseId({ commit }, request) {
+  scanByExtrasPurchaseId ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/registration/scanByExtrasPurchaseId', { payload: request })
-        .then((response) => {
+        .then(response => {
           // commit("setRegistration", response.data?.payload);
           resolve(response.data?.payload)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },

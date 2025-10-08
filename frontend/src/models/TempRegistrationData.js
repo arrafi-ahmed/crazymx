@@ -2,7 +2,7 @@
  * TempRegistrationData model class
  */
 export class TempRegistrationData {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.sessionId = data.sessionId || null
     this.registrationData = data.registrationData || null
     this.ticketItems = data.ticketItems || null
@@ -15,8 +15,10 @@ export class TempRegistrationData {
   /**
    * Check if the temporary data has expired
    */
-  isExpired() {
-    if (!this.expiresAt) return true
+  isExpired () {
+    if (!this.expiresAt) {
+      return true
+    }
 
     const now = new Date()
     const expiry = new Date(this.expiresAt)
@@ -27,21 +29,25 @@ export class TempRegistrationData {
   /**
    * Check if the temporary data is still valid
    */
-  isValid() {
+  isValid () {
     return !this.isExpired()
   }
 
   /**
    * Get time until expiry in minutes
    */
-  getTimeUntilExpiry() {
-    if (!this.expiresAt) return 0
+  getTimeUntilExpiry () {
+    if (!this.expiresAt) {
+      return 0
+    }
 
     const now = new Date()
     const expiry = new Date(this.expiresAt)
     const diffInMs = expiry - now
 
-    if (diffInMs <= 0) return 0
+    if (diffInMs <= 0) {
+      return 0
+    }
 
     return Math.ceil(diffInMs / (1000 * 60))
   }
@@ -49,7 +55,7 @@ export class TempRegistrationData {
   /**
    * Check if data expires soon (within 5 minutes)
    */
-  expiresSoon() {
+  expiresSoon () {
     const timeUntilExpiry = this.getTimeUntilExpiry()
     return timeUntilExpiry > 0 && timeUntilExpiry <= 5
   }
@@ -57,45 +63,51 @@ export class TempRegistrationData {
   /**
    * Get registration data field
    */
-  getRegistrationField(key) {
-    if (!this.registrationData) return null
+  getRegistrationField (key) {
+    if (!this.registrationData) {
+      return null
+    }
     return this.registrationData[key]
   }
 
   /**
    * Get ticket item by index
    */
-  getTicketItem(index) {
-    if (!this.ticketItems || !Array.isArray(this.ticketItems)) return null
+  getTicketItem (index) {
+    if (!this.ticketItems || !Array.isArray(this.ticketItems)) {
+      return null
+    }
     return this.ticketItems[index] || null
   }
 
   /**
    * Get total number of ticket items
    */
-  getTicketItemCount() {
-    if (!this.ticketItems || !Array.isArray(this.ticketItems)) return 0
+  getTicketItemCount () {
+    if (!this.ticketItems || !Array.isArray(this.ticketItems)) {
+      return 0
+    }
     return this.ticketItems.length
   }
 
   /**
    * Check if has ticket items
    */
-  hasTicketItems() {
+  hasTicketItems () {
     return this.getTicketItemCount() > 0
   }
 
   /**
    * Check if has registration data
    */
-  hasRegistrationData() {
+  hasRegistrationData () {
     return this.registrationData && Object.keys(this.registrationData).length > 0
   }
 
   /**
    * Validates the temporary registration data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.sessionId) {
@@ -131,7 +143,7 @@ export class TempRegistrationData {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       sessionId: this.sessionId,
       registrationData: this.registrationData,

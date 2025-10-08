@@ -1,37 +1,37 @@
 <script setup>
-import { ref } from 'vue'
+  import { ref } from 'vue'
 
-const dialog = ref(false)
+  const dialog = ref(false)
 
-const { popupTitle, popupContent, color } = defineProps({
-  popupTitle: {
-    type: String,
-    default: 'Delete',
-  },
-  popupContent: {
-    type: String,
-    default: 'Are you sure?',
-  },
-  color: { type: String, default: 'error' },
-})
+  const { popupTitle, popupContent, color } = defineProps({
+    popupTitle: {
+      type: String,
+      default: 'Delete',
+    },
+    popupContent: {
+      type: String,
+      default: 'Are you sure?',
+    },
+    color: { type: String, default: 'error' },
+  })
 
-const emit = defineEmits(['confirm'])
+  const emit = defineEmits(['confirm'])
 
-const onClick = () => {
-  dialog.value = true
-}
+  function onClick () {
+    dialog.value = true
+  }
 
-const confirmAction = () => {
-  emit('confirm')
-  dialog.value = false
-}
+  function confirmAction () {
+    emit('confirm')
+    dialog.value = false
+  }
 </script>
 
 <template>
   <!-- Slot for activator button -->
   <slot
-    :on-click="onClick"
     name="activator"
+    :on-click="onClick"
   />
 
   <!-- Confirmation dialog -->
@@ -47,8 +47,8 @@ const confirmAction = () => {
       <v-card-actions>
         <v-spacer />
         <v-btn
-          :color="color"
           class="mr-3"
+          :color="color"
           @click="confirmAction"
         >
           Yes

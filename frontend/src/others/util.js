@@ -1,22 +1,23 @@
-import { toast } from 'vue-sonner'
 import { countries } from '@/others/country-list'
 import $axios from '@/plugins/axios'
 
-export const appInfo = { name: 'Tucson Cathedral Concerts', version: 1.0 }
+export const appInfo = { name: 'Tucson Cathedral Concerts', version: 1 }
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
 export const clientBaseUrl = import.meta.env.VITE_BASE_URL
 export const stripePublic = import.meta.env.VITE_STRIPE_PUBLIC
 export const isProd = import.meta.env.PROD
 
-export const sendToWhatsapp = (phone, message) => {
+export function sendToWhatsapp (phone, message) {
   const encodedMessage = encodeURIComponent(message)
   const whatsappShareLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`
   window.open(whatsappShareLink, '_blank')
 }
 
 // Interpret 'YYYY-MM-DD' as a local date to avoid timezone shifts
-const parseAsLocalDate = (input) => {
-  if (!input) return null
+function parseAsLocalDate (input) {
+  if (!input) {
+    return null
+  }
   if (typeof input === 'string') {
     const m = input.match(/^(\d{4})-(\d{2})-(\d{2})$/)
     if (m) {
@@ -29,9 +30,11 @@ const parseAsLocalDate = (input) => {
   return new Date(input)
 }
 
-export const formatDate = (inputDate) => {
+export function formatDate (inputDate) {
   const date = parseAsLocalDate(inputDate)
-  if (!(date instanceof Date) || isNaN(date)) return ''
+  if (!(date instanceof Date) || isNaN(date)) {
+    return ''
+  }
   const day = `0${date.getDate()}`.slice(-2)
   const month = `0${date.getMonth() + 1}`.slice(-2)
   const year = date.getFullYear()
@@ -39,39 +42,41 @@ export const formatDate = (inputDate) => {
 }
 
 // get iso datetime offset with timezone
-export const toLocalISOString = (inputDate) => {
+export function toLocalISOString (inputDate) {
   const date = new Date(inputDate)
-  const tzoffset = date.getTimezoneOffset() * 60000 // offset in milliseconds
+  const tzoffset = date.getTimezoneOffset() * 60_000 // offset in milliseconds
   const localISOTime = new Date(date - tzoffset).toISOString().slice(0, -1)
   return localISOTime
 }
 
-export const formatDateTime = (inputDateTime) => {
+export function formatDateTime (inputDateTime) {
   const date = parseAsLocalDate(inputDateTime)
-  if (!(date instanceof Date) || isNaN(date)) return ''
+  if (!(date instanceof Date) || isNaN(date)) {
+    return ''
+  }
   const formattedDate = formatDate(date)
   const hours = `0${date.getHours()}`.slice(-2)
   const minutes = `0${date.getMinutes()}`.slice(-2)
   return `${formattedDate} ${hours}:${minutes}`
 }
 
-export const getClientPublicImageUrl = (imageName) => (imageName ? `/img/${imageName}` : null)
+export const getClientPublicImageUrl = imageName => (imageName ? `/img/${imageName}` : null)
 
 export const getApiPublicImageUrl = (imageName, type) => `${apiBaseUrl}/${type}/${imageName}`
 
-export const getUserImageUrl = (imageName) => {
+export function getUserImageUrl (imageName) {
   return imageName === 'null' || !imageName
     ? getClientPublicImageUrl('default-user.jpg')
     : getApiPublicImageUrl(imageName, 'user')
 }
 
-export const getClubImageUrl = (imageName) => {
+export function getClubImageUrl (imageName) {
   return imageName === 'null' || !imageName
     ? getClientPublicImageUrl('default-user.jpg')
     : getApiPublicImageUrl(imageName, 'club-logo')
 }
 
-export const getEventImageUrl = (imageName, eventName = null) => {
+export function getEventImageUrl (imageName, eventName = null) {
   if (imageName === 'null' || !imageName) {
     // Create a data URL for the default placeholder
     const svgData = `<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -140,7 +145,7 @@ export const getEventImageUrl = (imageName, eventName = null) => {
 
 export const padStr = (str, num) => String(str).padStart(num, '0')
 
-export const getToLink = (item) => {
+export function getToLink (item) {
   if (item.to.params) {
     const paramKey = Object.keys(item.to.params)[0]
     const paramVal = item.to.params[paramKey]
@@ -163,21 +168,21 @@ export const extrasItems = [
   { title: 'Redeemed', value: true },
 ]
 
-export const getQueryParam = (param) => {
+export function getQueryParam (param) {
   const queryParams = new URLSearchParams(window.location.search)
   return queryParams.get(param)
 }
 
-export const removeQueryParams = (url, paramsToRemove) => {
+export function removeQueryParams (url, paramsToRemove) {
   const parsedUrl = new URL(url)
 
   // Create a URLSearchParams object from the URL's search parameters
   const searchParams = new URLSearchParams(parsedUrl.search)
 
   // Remove the specified query parameters
-  paramsToRemove.forEach((param) => {
+  for (const param of paramsToRemove) {
     searchParams.delete(param)
-  })
+  }
 
   // Construct the new URL with the updated search parameters
   parsedUrl.search = searchParams.toString()
@@ -186,18 +191,20 @@ export const removeQueryParams = (url, paramsToRemove) => {
   return parsedUrl.toString()
 }
 
-export const isValidEmail = (email) => {
+export function isValidEmail (email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
-export const isValidImage = (file) => {
-  if (!file || typeof file !== 'object') return false
+export function isValidImage (file) {
+  if (!file || typeof file !== 'object') {
+    return false
+  }
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
   return allowedTypes.includes(file.type)
 }
 
-export const generateQrData = ({ registrationId, attendeeId, qrUuid }) => {
+export function generateQrData ({ registrationId, attendeeId, qrUuid }) {
   const qrData = {
     r: registrationId,
     a: attendeeId,
@@ -206,21 +213,25 @@ export const generateQrData = ({ registrationId, attendeeId, qrUuid }) => {
   return JSON.stringify(qrData)
 }
 
-export const deepCopy = (aObject) => {
+export function deepCopy (aObject) {
   // Prevent undefined objects
-  if (!aObject) return aObject
-  let bObject = Array.isArray(aObject) ? [] : {}
+  if (!aObject) {
+    return aObject
+  }
+  const bObject = Array.isArray(aObject) ? [] : {}
   let value
   for (const key in aObject) {
     // Prevent self-references to parent object
-    if (Object.is(aObject[key], aObject)) continue
+    if (Object.is(aObject[key], aObject)) {
+      continue
+    }
     value = aObject[key]
     bObject[key] = typeof value === 'object' ? deepCopy(value) : value
   }
   return bObject
 }
 
-export const deepMerge = (target, source) => {
+export function deepMerge (target, source) {
   for (const key in source) {
     if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
       if (!target[key] || typeof target[key] !== 'object') {
@@ -235,12 +246,12 @@ export const deepMerge = (target, source) => {
 }
 
 export const isValidPass = [
-  (v) => !!v || 'Password is required!',
-  (v) => v.length >= 8 || 'Password must be 8 or more characters!',
-  (v) => /\d/.test(v) || 'Password must include at least one number!',
+  v => !!v || 'Password is required!',
+  v => v.length >= 8 || 'Password must be 8 or more characters!',
+  v => /\d/.test(v) || 'Password must include at least one number!',
 ]
 
-export const showApiQueryMsg = (color = 'blue') => {
+export function showApiQueryMsg (color = 'blue') {
   if (localStorage.hasOwnProperty('apiQueryMsg')) {
     toast(localStorage.getItem('apiQueryMsg'), {
       cardProps: { color },
@@ -249,7 +260,7 @@ export const showApiQueryMsg = (color = 'blue') => {
         buttonProps: {
           color: 'white',
         },
-        onClick() {},
+        onClick () {},
       },
     })
     localStorage.removeItem('apiQueryMsg')
@@ -264,16 +275,18 @@ export const input_fields = [
   { id: 4, title: 'Dropdown' },
 ]
 
-export const getInputType = (typeId) => {
-  return input_fields.find((item) => item.id == typeId)
+export function getInputType (typeId) {
+  return input_fields.find(item => item.id == typeId)
 }
 
-export const getCountryList = (filterName) => {
-  if (filterName === 'all') return countries
-  return countries.map((item) => item[filterName])
+export function getCountryList (filterName) {
+  if (filterName === 'all') {
+    return countries
+  }
+  return countries.map(item => item[filterName])
 }
 
-export const getCurrencySymbol = ({ code, type }) => {
+export function getCurrencySymbol ({ code, type }) {
   const codeLower = code.toString().toLowerCase()
   const currencyMap = {
     usd: { icon: 'mdi-currency-usd', symbol: '$', value: 'usd' },
@@ -300,15 +313,17 @@ export const defaultCurrency = getCurrencySymbol({ code: 'usd' })
  * @param {object} options - Formatting options
  * @returns {string} Formatted price string
  */
-export const formatPrice = (price, currency = 'USD', options = {}) => {
-  if (!price && price !== 0) return ''
+export function formatPrice (price, currency = 'USD', options = {}) {
+  if (!price && price !== 0) {
+    return ''
+  }
 
   // Convert cents to currency units (prices are always stored in cents)
   const amount = price / 100
 
   const defaultOptions = {
     style: 'currency',
-    currency: currency,
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }
@@ -324,8 +339,10 @@ export const formatPrice = (price, currency = 'USD', options = {}) => {
  * @param {string} currency - Currency code
  * @returns {string} Compact formatted price string
  */
-export const formatPriceCompact = (price, currency = 'USD') => {
-  if (!price && price !== 0) return ''
+export function formatPriceCompact (price, currency = 'USD') {
+  if (!price && price !== 0) {
+    return ''
+  }
 
   // Convert cents to currency units (prices are always stored in cents)
   const amount = price / 100
@@ -340,27 +357,30 @@ export const formatPriceCompact = (price, currency = 'USD') => {
   }
 }
 
-export const handleRedirect = ({ param, hardRedirect = true }) => {
+export function handleRedirect ({ param, hardRedirect = true }) {
   const paramValue = getQueryParam({ param })
   if (paramValue) {
-    let newUrl = paramValue
+    const newUrl = paramValue
 
-    if (hardRedirect) window.location.replace(newUrl)
-    else window.history.replaceState({}, document.title, newUrl) // Corrected: Use .replace() as a method
+    if (hardRedirect) {
+      window.location.replace(newUrl)
+    } else {
+      window.history.replaceState({}, document.title, newUrl)
+    } // Corrected: Use .replace() as a method
     return true // Indicates a redirect happened
   }
   return false
 }
 
-export const handleRemoveQueriesNRedirect = ({
+export function handleRemoveQueriesNRedirect ({
   params = [], // Array of param names to check/remove
   saveToLocalStorage = true,
   hardRedirect = true,
-}) => {
+}) {
   let found = false
-  let queryParamsToRemove = []
+  const queryParamsToRemove = []
 
-  params.forEach((paramName) => {
+  for (const paramName of params) {
     const paramValue = getQueryParam({ param: paramName })
 
     if (paramValue) {
@@ -371,7 +391,7 @@ export const handleRemoveQueriesNRedirect = ({
         localStorage.setItem(paramName, paramValue)
       }
     }
-  })
+  }
 
   if (found) {
     const newUrl = removeQueryParams({ paramsToRemove: queryParamsToRemove })
@@ -389,7 +409,7 @@ export const handleRemoveQueriesNRedirect = ({
 export const ifSudo = ({ role }) => role === 10
 export const ifAdmin = ({ role }) => role === 20
 
-export const generatePassword = (length = 8) => {
+export function generatePassword (length = 8) {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,/()-*&^%$#@!'
   let password = ''
   for (let i = 0; i < length; i++) {
@@ -399,8 +419,10 @@ export const generatePassword = (length = 8) => {
 }
 
 // Generate a URL-friendly slug from a title
-export const generateSlug = (title) => {
-  if (!title) return ''
+export function generateSlug (title) {
+  if (!title) {
+    return ''
+  }
 
   return (
     title
@@ -419,24 +441,24 @@ export const generateSlug = (title) => {
 // Utility function to make API calls with suppressed toasts
 export const apiCall = {
   // Regular API call (shows toasts)
-  async get(url, config = {}) {
+  async get (url, config = {}) {
     return await $axios.get(url, config)
   },
 
-  async post(url, data, config = {}) {
+  async post (url, data, config = {}) {
     return await $axios.post(url, data, config)
   },
 
-  async put(url, data, config = {}) {
+  async put (url, data, config = {}) {
     return await $axios.put(url, data, config)
   },
 
-  async delete(url, config = {}) {
+  async delete (url, config = {}) {
     return await $axios.delete(url, config)
   },
 
   // API calls with suppressed toasts
-  async getSilent(url, config = {}) {
+  async getSilent (url, config = {}) {
     return await $axios.get(url, {
       ...config,
       headers: {
@@ -446,7 +468,7 @@ export const apiCall = {
     })
   },
 
-  async postSilent(url, data, config = {}) {
+  async postSilent (url, data, config = {}) {
     return await $axios.post(url, data, {
       ...config,
       headers: {
@@ -456,7 +478,7 @@ export const apiCall = {
     })
   },
 
-  async putSilent(url, data, config = {}) {
+  async putSilent (url, data, config = {}) {
     return await $axios.put(url, data, {
       ...config,
       headers: {
@@ -466,7 +488,7 @@ export const apiCall = {
     })
   },
 
-  async deleteSilent(url, config = {}) {
+  async deleteSilent (url, config = {}) {
     return await $axios.delete(url, {
       ...config,
       headers: {

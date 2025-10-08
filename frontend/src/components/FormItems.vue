@@ -1,34 +1,34 @@
 <script setup>
-import { defineEmits, defineProps, ref, watch } from 'vue'
-import Phone from '@/components/Phone.vue'
-import { isValidEmail } from '@/others/util'
+  import { defineEmits, defineProps, ref, watch } from 'vue'
+  import Phone from '@/components/Phone.vue'
+  import { isValidEmail } from '@/others/util'
 
-const { items, overAllIndex, quantityIndex, type } = defineProps([
-  'items',
-  'overAllIndex',
-  'quantityIndex',
-  'type',
-])
-const inputResponses = ref([])
+  const { items, overAllIndex, quantityIndex, type } = defineProps([
+    'items',
+    'overAllIndex',
+    'quantityIndex',
+    'type',
+  ])
+  const inputResponses = ref([])
 
-const emit = defineEmits(['update'])
+  const emit = defineEmits(['update'])
 
-const handleUpdatePhone = ({ formattedPhone, index }) => {
-  inputResponses.value[index] = formattedPhone
-}
+  function handleUpdatePhone ({ formattedPhone, index }) {
+    inputResponses.value[index] = formattedPhone
+  }
 
-watch(
-  () => items,
-  (newVal) => {
-    if (newVal) {
-      inputResponses.value = newVal.map((item) => (item?.typeId == 3 ? [] : null))
-    }
-  },
-  { immediate: true },
-)
-watch(inputResponses.value, (newVal) => {
-  emit('update', { newVal, overAllIndex, quantityIndex })
-})
+  watch(
+    () => items,
+    newVal => {
+      if (newVal) {
+        inputResponses.value = newVal.map(item => (item?.typeId == 3 ? [] : null))
+      }
+    },
+    { immediate: true },
+  )
+  watch(inputResponses.value, newVal => {
+    emit('update', { newVal, overAllIndex, quantityIndex })
+  })
 </script>
 
 <template>
@@ -44,17 +44,17 @@ watch(inputResponses.value, (newVal) => {
       <div v-if="item.typeId == 0">
         <v-text-field
           v-model="inputResponses[index]"
-          :rules="[
-            (v) => !!v || !item.required || 'required',
-            (v) =>
-              item.fieldName?.toLowerCase() === 'email' ? isValidEmail(v) || 'Invalid email' : true,
-          ]"
           class="mt-2 mt-md-4 input-color-primary"
           clearable
           color="tertiary"
           density="default"
           hide-details="auto"
           rounded="lg"
+          :rules="[
+            (v) => !!v || !item.required || 'required',
+            (v) =>
+              item.fieldName?.toLowerCase() === 'email' ? isValidEmail(v) || 'Invalid email' : true,
+          ]"
           variant="solo"
         >
           <template #label>
@@ -72,13 +72,13 @@ watch(inputResponses.value, (newVal) => {
       <div v-else-if="item.typeId == 1">
         <v-textarea
           v-model="inputResponses[index]"
-          :rules="[(v) => !!v || !item.required || 'required']"
           class="mt-2 mt-md-4 input-color-primary"
           clearable
           color="tertiary"
           density="default"
           hide-details="auto"
           rounded="lg"
+          :rules="[(v) => !!v || !item.required || 'required']"
           variant="solo"
         >
           <template #label>
@@ -99,13 +99,13 @@ watch(inputResponses.value, (newVal) => {
       >
         <v-radio-group
           v-model="inputResponses[index]"
-          :rules="[(v) => !!v || !item.required || 'required']"
           class="input-color-primary"
           clearable
           color="primary"
           density="default"
           hide-details="auto"
           rounded="lg"
+          :rules="[(v) => !!v || !item.required || 'required']"
           variant="solo"
         >
           <template #label>
@@ -145,25 +145,25 @@ watch(inputResponses.value, (newVal) => {
           :key="childIndex"
           v-model="inputResponses[index]"
           :class="{ 'mt-n2': childIndex > 0 }"
-          :label="childItem"
-          :single-line="false"
-          :value="childItem"
           color="primary"
           density="compact"
           hide-details="auto"
+          :label="childItem"
+          :single-line="false"
+          :value="childItem"
         />
       </div>
       <div v-else-if="item.typeId == 4 && item.options?.length > 0">
         <v-select
           v-model="inputResponses[index]"
-          :items="item.options"
-          :rules="[(v) => !!v || !item.required || 'required']"
           class="mt-2 mt-md-4 input-color-primary"
           clearable
           color="tertiary"
           density="default"
           hide-details="auto"
+          :items="item.options"
           rounded="lg"
+          :rules="[(v) => !!v || !item.required || 'required']"
           variant="solo-filled"
         >
           <template #label>

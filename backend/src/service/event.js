@@ -401,7 +401,7 @@ exports.getFirstEvent = async () => {
 
 exports.saveConfig = async ({payload, currentUser}) => {
     // const eventId = payload.id;
-    
+
     // // Check authorization
     // if (!ifSudo(currentUser.role)) {
     //     const sql = `
@@ -430,22 +430,21 @@ exports.saveConfig = async ({payload, currentUser}) => {
     const sql = `
         UPDATE event
         SET config = $1
-        WHERE id = $2
-        RETURNING *
+        WHERE id = $2 RETURNING *
     `;
-    
+
     const values = [
         JSON.stringify(payload.config),
         payload.eventId
     ];
-    
+
     const result = await query(sql, values);
     return result.rows[0];
 };
 
 exports.saveLandingConfig = async ({payload, currentUser}) => {
     const eventId = payload.id;
-    
+
     // Check authorization
     if (!ifSudo(currentUser.role)) {
         const sql = `
@@ -476,15 +475,14 @@ exports.saveLandingConfig = async ({payload, currentUser}) => {
     const sql = `
         UPDATE event
         SET landing_config = $1
-        WHERE id = $2
-        RETURNING *
+        WHERE id = $2 RETURNING *
     `;
-    
+
     const values = [
         JSON.stringify(landingConfig),
         eventId
     ];
-    
+
     const result = await query(sql, values);
     return result.rows[0];
 };

@@ -8,23 +8,23 @@ export const state = {
 }
 
 export const mutations = {
-  setTickets(state, payload) {
+  setTickets (state, payload) {
     state.tickets = payload
   },
-  setCurrentTicket(state, payload) {
+  setCurrentTicket (state, payload) {
     state.currentTicket = payload
   },
-  addTicket(state, payload) {
+  addTicket (state, payload) {
     state.tickets.push(payload)
   },
-  updateTicket(state, payload) {
-    const index = state.tickets.findIndex((ticket) => ticket.id === payload.id)
+  updateTicket (state, payload) {
+    const index = state.tickets.findIndex(ticket => ticket.id === payload.id)
     if (index !== -1) {
       state.tickets[index] = payload
     }
   },
-  removeTicket(state, payload) {
-    const index = state.tickets.findIndex((ticket) => ticket.id === payload)
+  removeTicket (state, payload) {
+    const index = state.tickets.findIndex(ticket => ticket.id === payload)
     if (index !== -1) {
       state.tickets.splice(index, 1)
     }
@@ -32,37 +32,37 @@ export const mutations = {
 }
 
 export const actions = {
-  setTickets({ commit }, request) {
+  setTickets ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/ticket/getTicketsByEventId', { params: { eventId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setTickets', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setCurrentTicket({ commit }, request) {
+  setCurrentTicket ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/ticket/getTicketById', { params: { ticketId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setCurrentTicket', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  saveTicket({ commit }, request) {
+  saveTicket ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/ticket/save', request)
-        .then((response) => {
+        .then(response => {
           const savedTicket = response.data?.payload
 
           if (request.id) {
@@ -74,31 +74,31 @@ export const actions = {
           }
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  removeTicket({ commit }, request) {
+  removeTicket ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .delete('/ticket/removeTicket', { data: request })
-        .then((response) => {
+        .then(response => {
           commit('removeTicket', request.ticketId)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 }
 
 export const getters = {
-  getTicketById: (state) => (id) => {
-    return state.tickets.find((ticket) => ticket.id == id)
+  getTicketById: state => id => {
+    return state.tickets.find(ticket => ticket.id == id)
   },
-  getTicketsByEventId: (state) => (eventId) => {
-    return state.tickets.filter((ticket) => ticket.eventId == eventId)
+  getTicketsByEventId: state => eventId => {
+    return state.tickets.filter(ticket => ticket.eventId == eventId)
   },
 }

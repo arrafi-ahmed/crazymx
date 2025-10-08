@@ -8,23 +8,23 @@ export const state = {
 }
 
 export const mutations = {
-  setPackages(state, payload) {
+  setPackages (state, payload) {
     state.packages = payload
   },
-  setCurrentPackage(state, payload) {
+  setCurrentPackage (state, payload) {
     state.currentPackage = payload
   },
-  addPackage(state, payload) {
+  addPackage (state, payload) {
     state.packages.unshift(payload)
   },
-  updatePackage(state, payload) {
-    const index = state.packages.findIndex((pkg) => pkg.id === payload.id)
+  updatePackage (state, payload) {
+    const index = state.packages.findIndex(pkg => pkg.id === payload.id)
     if (index !== -1) {
       state.packages[index] = payload
     }
   },
-  removePackage(state, payload) {
-    const index = state.packages.findIndex((pkg) => pkg.id === payload)
+  removePackage (state, payload) {
+    const index = state.packages.findIndex(pkg => pkg.id === payload)
     if (index !== -1) {
       state.packages.splice(index, 1)
     }
@@ -32,37 +32,37 @@ export const mutations = {
 }
 
 export const actions = {
-  setPackages({ commit }, request) {
+  setPackages ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/sponsorship-package/getPackagesByEventId', { params: { eventId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setPackages', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setCurrentPackage({ commit }, request) {
+  setCurrentPackage ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/sponsorship-package/getPackageById', { params: { packageId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setCurrentPackage', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  savePackage({ commit }, request) {
+  savePackage ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/sponsorship-package/save', request)
-        .then((response) => {
+        .then(response => {
           if (request.id) {
             commit('updatePackage', response.data?.payload)
           } else {
@@ -70,47 +70,47 @@ export const actions = {
           }
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  deletePackage({ commit }, request) {
+  deletePackage ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .delete('/sponsorship-package/deletePackage', { data: request })
-        .then((response) => {
+        .then(response => {
           commit('removePackage', request.packageId)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  updatePackageStatus({ commit }, request) {
+  updatePackageStatus ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/sponsorship-package/updateStatus', request)
-        .then((response) => {
+        .then(response => {
           commit('updatePackage', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 }
 
 export const getters = {
-  getPackageById: (state) => (id) => {
-    return state.packages.find((pkg) => pkg.id == id)
+  getPackageById: state => id => {
+    return state.packages.find(pkg => pkg.id == id)
   },
-  getActivePackages: (state) => {
-    return state.packages.filter((pkg) => pkg.isActive)
+  getActivePackages: state => {
+    return state.packages.filter(pkg => pkg.isActive)
   },
-  getPackagesByEventId: (state) => (eventId) => {
-    return state.packages.filter((pkg) => pkg.eventId == eventId)
+  getPackagesByEventId: state => eventId => {
+    return state.packages.filter(pkg => pkg.eventId == eventId)
   },
 }

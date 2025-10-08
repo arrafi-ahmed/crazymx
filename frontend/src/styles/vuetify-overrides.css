@@ -1,0 +1,10 @@
+/* src/styles/vuetify-overrides.css */
+:root {
+    --v-border-radius-xl: 16px !important; /* Reinforce the var */
+}
+
+/* Directly override the utility if it's not using the var */
+.rounded-xl,
+.rounded-xl * {
+    border-radius: var(--v-border-radius-xl) !important;
+}

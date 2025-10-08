@@ -11,7 +11,7 @@ const emailService = require("./email");
 const tempRegistrationService = require("./tempRegistration");
 const orderService = require("./order");
 const stripeService = require("./stripe");
-const { log } = require("handlebars");
+const {log} = require("handlebars");
 
 // Cleanup expired temporary registration data
 exports.cleanupExpiredTempData = async () => {
@@ -190,7 +190,7 @@ exports.bulkImportAttendee = async ({files, eventId, clubId}) => {
         `;
 
         const registrationValues = [
-            eventId,            
+            eventId,
             JSON.stringify(attendees[0].additionalFields),
             true,
         ];

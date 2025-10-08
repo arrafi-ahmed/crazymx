@@ -2,7 +2,7 @@
  * SponsorshipPackage model class
  */
 export class SponsorshipPackage {
-  constructor(data = {}) {
+  constructor (data = {}) {
     this.id = data.id || null
     this.name = data.name || ''
     this.description = data.description || ''
@@ -20,7 +20,7 @@ export class SponsorshipPackage {
   /**
    * Common currencies
    */
-  static get CURRENCIES() {
+  static get CURRENCIES () {
     return {
       USD: 'USD',
       EUR: 'EUR',
@@ -34,53 +34,61 @@ export class SponsorshipPackage {
   /**
    * Check if package is active
    */
-  isActive() {
+  isActive () {
     return this.isActive === true
   }
 
   /**
    * Check if package is inactive
    */
-  isInactive() {
+  isInactive () {
     return !this.isActive()
   }
 
   /**
    * Check if package is free
    */
-  isFree() {
+  isFree () {
     return this.price === 0
   }
 
   /**
    * Check if package has unlimited availability
    */
-  hasUnlimitedAvailability() {
+  hasUnlimitedAvailability () {
     return this.availableCount === -1
   }
 
   /**
    * Check if package is available for purchase
    */
-  isAvailable() {
-    if (this.isInactive()) return false
-    if (this.hasUnlimitedAvailability()) return true
+  isAvailable () {
+    if (this.isInactive()) {
+      return false
+    }
+    if (this.hasUnlimitedAvailability()) {
+      return true
+    }
     return this.availableCount > 0
   }
 
   /**
    * Get remaining availability
    */
-  getRemainingAvailability() {
-    if (this.hasUnlimitedAvailability()) return null // Unlimited
+  getRemainingAvailability () {
+    if (this.hasUnlimitedAvailability()) {
+      return null
+    } // Unlimited
     return Math.max(0, this.availableCount)
   }
 
   /**
    * Decrease availability by specified count
    */
-  decreaseAvailability(count = 1) {
-    if (this.hasUnlimitedAvailability()) return true // Unlimited
+  decreaseAvailability (count = 1) {
+    if (this.hasUnlimitedAvailability()) {
+      return true
+    } // Unlimited
 
     if (this.availableCount >= count) {
       this.availableCount -= count
@@ -94,8 +102,10 @@ export class SponsorshipPackage {
   /**
    * Increase availability by specified count
    */
-  increaseAvailability(count = 1) {
-    if (this.hasUnlimitedAvailability()) return true // Unlimited
+  increaseAvailability (count = 1) {
+    if (this.hasUnlimitedAvailability()) {
+      return true
+    } // Unlimited
 
     this.availableCount += count
     this.updatedAt = new Date()
@@ -105,31 +115,35 @@ export class SponsorshipPackage {
   /**
    * Check if package has features
    */
-  hasFeatures() {
+  hasFeatures () {
     return this.features && Array.isArray(this.features) && this.features.length > 0
   }
 
   /**
    * Get features array
    */
-  getFeatures() {
-    if (!this.hasFeatures()) return []
+  getFeatures () {
+    if (!this.hasFeatures()) {
+      return []
+    }
     return this.features
   }
 
   /**
    * Get feature by name
    */
-  getFeature(name) {
-    if (!this.hasFeatures()) return null
+  getFeature (name) {
+    if (!this.hasFeatures()) {
+      return null
+    }
 
-    return this.features.find((feature) => feature.name === name) || null
+    return this.features.find(feature => feature.name === name) || null
   }
 
   /**
    * Check if package includes a specific feature
    */
-  includesFeature(name) {
+  includesFeature (name) {
     const feature = this.getFeature(name)
     return feature ? feature.included === true : false
   }
@@ -137,50 +151,64 @@ export class SponsorshipPackage {
   /**
    * Get price in cents
    */
-  getPriceInCents() {
+  getPriceInCents () {
     return this.price
   }
 
   /**
    * Get price in dollars
    */
-  getPriceInDollars() {
+  getPriceInDollars () {
     return this.price / 100
   }
 
   /**
    * Format price for display
    */
-  formatPrice() {
-    if (this.isFree()) return 'Free'
+  formatPrice () {
+    if (this.isFree()) {
+      return 'Free'
+    }
 
     switch (this.currency) {
-      case 'USD':
+      case 'USD': {
         return `$${this.getPriceInDollars().toFixed(2)}`
-      case 'EUR':
+      }
+      case 'EUR': {
         return `€${this.getPriceInDollars().toFixed(2)}`
-      case 'GBP':
+      }
+      case 'GBP': {
         return `£${this.getPriceInDollars().toFixed(2)}`
-      default:
+      }
+      default: {
         return `${this.getPriceInDollars().toFixed(2)} ${this.currency}`
+      }
     }
   }
 
   /**
    * Get availability status text
    */
-  getAvailabilityStatus() {
-    if (this.isInactive()) return 'Inactive'
-    if (this.hasUnlimitedAvailability()) return 'Unlimited'
-    if (this.availableCount === 0) return 'Sold Out'
-    if (this.availableCount <= 5) return 'Limited'
+  getAvailabilityStatus () {
+    if (this.isInactive()) {
+      return 'Inactive'
+    }
+    if (this.hasUnlimitedAvailability()) {
+      return 'Unlimited'
+    }
+    if (this.availableCount === 0) {
+      return 'Sold Out'
+    }
+    if (this.availableCount <= 5) {
+      return 'Limited'
+    }
     return 'Available'
   }
 
   /**
    * Validates the sponsorship package data
    */
-  validate() {
+  validate () {
     const errors = []
 
     if (!this.name || this.name.trim().length === 0) {
@@ -208,14 +236,14 @@ export class SponsorshipPackage {
     }
 
     if (this.features && Array.isArray(this.features)) {
-      this.features.forEach((feature, index) => {
+      for (const [index, feature] of this.features.entries()) {
         if (!feature.name || typeof feature.name !== 'string') {
           errors.push(`Feature ${index + 1} must have a valid name`)
         }
         if (typeof feature.included !== 'boolean') {
           errors.push(`Feature ${index + 1} must have a valid included boolean`)
         }
-      })
+      }
     }
 
     if (!this.eventId) {
@@ -235,7 +263,7 @@ export class SponsorshipPackage {
   /**
    * Returns a plain object (for API requests/responses)
    */
-  toJSON() {
+  toJSON () {
     return {
       id: this.id,
       name: this.name,

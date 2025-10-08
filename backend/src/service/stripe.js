@@ -101,7 +101,7 @@ exports.createPaymentIntent = async ({
             extrasPurchaseId: savedExtrasPurchase?.id,
             eventId: savedRegistration.eventId,
         },
-        automatic_tax: { enabled: true },
+        automatic_tax: {enabled: true},
     });
 
     return {clientSecret: paymentIntent.client_secret};
@@ -552,7 +552,7 @@ exports.createSecurePaymentIntent = async ({
         }
 
         // Apply event-level tax if configured
-        const taxConfig = (event.landingConfig || event.landing_config || {} ).tax || null;
+        const taxConfig = (event.landingConfig || event.landing_config || {}).tax || null;
         if (taxConfig && typeof taxConfig === 'object') {
             const type = (taxConfig.type || '').toLowerCase();
             const amount = Number(taxConfig.amount || 0);

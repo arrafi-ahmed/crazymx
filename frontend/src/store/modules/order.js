@@ -8,17 +8,17 @@ export const state = {
 }
 
 export const mutations = {
-  setOrders(state, payload) {
+  setOrders (state, payload) {
     state.orders = payload
   },
-  setCurrentOrder(state, payload) {
+  setCurrentOrder (state, payload) {
     state.currentOrder = payload
   },
-  addOrder(state, payload) {
+  addOrder (state, payload) {
     state.orders.unshift(payload)
   },
-  updateOrder(state, payload) {
-    const index = state.orders.findIndex((order) => order.id === payload.id)
+  updateOrder (state, payload) {
+    const index = state.orders.findIndex(order => order.id === payload.id)
     if (index !== -1) {
       state.orders[index] = payload
     }
@@ -26,68 +26,68 @@ export const mutations = {
 }
 
 export const actions = {
-  setOrders({ commit }, request) {
+  setOrders ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/order/getOrdersByEventId', { params: { eventId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setOrders', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setCurrentOrder({ commit }, request) {
+  setCurrentOrder ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/order/getOrderById', { params: { orderId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setCurrentOrder', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  getOrderWithItems({ commit }, request) {
+  getOrderWithItems ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/order/getOrderWithItems', { params: { orderId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setCurrentOrder', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  createOrder({ commit }, request) {
+  createOrder ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/order/createOrder', request)
-        .then((response) => {
+        .then(response => {
           commit('addOrder', response.data?.payload?.order)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 }
 
 export const getters = {
-  getOrderById: (state) => (id) => {
-    return state.orders.find((order) => order.id == id)
+  getOrderById: state => id => {
+    return state.orders.find(order => order.id == id)
   },
-  getOrdersByEventId: (state) => (eventId) => {
-    return state.orders.filter((order) => order.eventId == eventId)
+  getOrdersByEventId: state => eventId => {
+    return state.orders.filter(order => order.eventId == eventId)
   },
-  getOrdersByStatus: (state) => (status) => {
-    return state.orders.filter((order) => order.paymentStatus == status)
+  getOrdersByStatus: state => status => {
+    return state.orders.filter(order => order.paymentStatus == status)
   },
 }

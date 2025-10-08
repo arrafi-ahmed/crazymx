@@ -7,30 +7,34 @@ export const state = {
 }
 
 export const mutations = {
-  setAdmins(state, payload) {
+  setAdmins (state, payload) {
     state.admins = payload
   },
-  addAdmin(state, payload) {
+  addAdmin (state, payload) {
     state.admins.unshift(payload)
   },
-  editAdmin(state, payload) {
-    const foundIndex = state.admins.findIndex((item) => item.id == payload.id)
-    if (foundIndex !== -1) state.admins[foundIndex] = payload
+  editAdmin (state, payload) {
+    const foundIndex = state.admins.findIndex(item => item.id == payload.id)
+    if (foundIndex !== -1) {
+      state.admins[foundIndex] = payload
+    }
   },
-  deleteAppUser(state, payload) {
-    const foundIndex = state.admins.findIndex((item) => item.id == payload)
-    if (foundIndex !== -1) state.admins.splice(foundIndex, 1)
+  deleteAppUser (state, payload) {
+    const foundIndex = state.admins.findIndex(item => item.id == payload)
+    if (foundIndex !== -1) {
+      state.admins.splice(foundIndex, 1)
+    }
   },
 }
 
 export const actions = {
-  saveAppUser({ commit }, request) {
+  saveAppUser ({ commit }, request) {
     const commitName = `${request.id ? 'edit' : 'add'}${request.type === 'admin' ? 'Admin' : ''}`
     const { type, ...rest } = request
     return new Promise((resolve, reject) => {
       $axios
         .post('/appUser/save', rest)
-        .then((response) => {
+        .then(response => {
           const { password, ...rest } = response.data?.payload
           commit(commitName, {
             ...rest,
@@ -38,38 +42,38 @@ export const actions = {
           })
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setAdmins({ commit }, request) {
+  setAdmins ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/appUser/getAppUsers', {
           params: { clubId: request },
         })
-        .then((response) => {
+        .then(response => {
           commit('setAdmins', response.data?.payload?.appUsers)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  deleteAppUser({ commit }, request) {
+  deleteAppUser ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/appUser/deleteAppUser', {
           params: { id: request },
         })
-        .then((response) => {
+        .then(response => {
           commit('deleteAppUser', request)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },

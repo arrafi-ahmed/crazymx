@@ -1,16 +1,16 @@
 <script setup>
-import { useDisplay } from 'vuetify'
-import { appInfo } from '@/others/util'
+  import { useDisplay } from 'vuetify'
+  import { appInfo } from '@/others/util'
 
-const { xs } = useDisplay()
-const { imgSrc, title, imgClass, containerClass, maxWidth, width } = defineProps([
-  'imgSrc',
-  'title',
-  'imgClass',
-  'containerClass',
-  'maxWidth',
-  'width',
-])
+  const { xs } = useDisplay()
+  const { imgSrc, title, imgClass, containerClass, maxWidth, width } = defineProps([
+    'imgSrc',
+    'title',
+    'imgClass',
+    'containerClass',
+    'maxWidth',
+    'width',
+  ])
 </script>
 
 <template>

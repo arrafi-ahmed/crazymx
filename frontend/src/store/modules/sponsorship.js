@@ -8,17 +8,17 @@ export const state = {
 }
 
 export const mutations = {
-  setSponsorships(state, payload) {
+  setSponsorships (state, payload) {
     state.sponsorships = payload
   },
-  setCurrentSponsorship(state, payload) {
+  setCurrentSponsorship (state, payload) {
     state.currentSponsorship = payload
   },
-  addSponsorship(state, payload) {
+  addSponsorship (state, payload) {
     state.sponsorships.unshift(payload)
   },
-  updateSponsorship(state, payload) {
-    const index = state.sponsorships.findIndex((sponsorship) => sponsorship.id === payload.id)
+  updateSponsorship (state, payload) {
+    const index = state.sponsorships.findIndex(sponsorship => sponsorship.id === payload.id)
     if (index !== -1) {
       state.sponsorships[index] = payload
     }
@@ -26,88 +26,88 @@ export const mutations = {
 }
 
 export const actions = {
-  setSponsorships({ commit }, request) {
+  setSponsorships ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/sponsorship/getSponsorshipsByEventId', { params: { eventId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setSponsorships', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setSponsorshipsByRegistration({ commit }, request) {
+  setSponsorshipsByRegistration ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/sponsorship/getSponsorshipsByRegistrationId', {
           params: { registrationId: request },
         })
-        .then((response) => {
+        .then(response => {
           commit('setSponsorships', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  setCurrentSponsorship({ commit }, request) {
+  setCurrentSponsorship ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .get('/sponsorship/getSponsorshipById', { params: { sponsorshipId: request } })
-        .then((response) => {
+        .then(response => {
           commit('setCurrentSponsorship', response.data?.payload)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  createSponsorship({ commit }, request) {
+  createSponsorship ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/sponsorship/create', request)
-        .then((response) => {
+        .then(response => {
           commit('addSponsorship', response.data?.payload?.sponsorship)
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
-  createSponsorshipPaymentIntent({ commit }, request) {
+  createSponsorshipPaymentIntent ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
         .post('/sponsorship/createSponsorshipPaymentIntent', request)
-        .then((response) => {
+        .then(response => {
           resolve(response)
         })
-        .catch((err) => {
-          reject(err)
+        .catch(error => {
+          reject(error)
         })
     })
   },
 }
 
 export const getters = {
-  getSponsorshipById: (state) => (id) => {
-    return state.sponsorships.find((sponsorship) => sponsorship.id == id)
+  getSponsorshipById: state => id => {
+    return state.sponsorships.find(sponsorship => sponsorship.id == id)
   },
-  getSponsorshipsByEventId: (state) => (eventId) => {
-    return state.sponsorships.filter((sponsorship) => sponsorship.eventId == eventId)
+  getSponsorshipsByEventId: state => eventId => {
+    return state.sponsorships.filter(sponsorship => sponsorship.eventId == eventId)
   },
-  getSponsorshipsByStatus: (state) => (status) => {
-    return state.sponsorships.filter((sponsorship) => sponsorship.paymentStatus == status)
+  getSponsorshipsByStatus: state => status => {
+    return state.sponsorships.filter(sponsorship => sponsorship.paymentStatus == status)
   },
-  getTotalSponsorshipAmount: (state) => (eventId) => {
+  getTotalSponsorshipAmount: state => eventId => {
     return state.sponsorships
       .filter(
-        (sponsorship) => sponsorship.eventId == eventId && sponsorship.paymentStatus == 'paid',
+        sponsorship => sponsorship.eventId == eventId && sponsorship.paymentStatus == 'paid',
       )
       .reduce((total, sponsorship) => total + sponsorship.amount, 0)
   },

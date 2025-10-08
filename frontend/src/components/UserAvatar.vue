@@ -1,10 +1,10 @@
 <script setup>
-import { getUserImageUrl } from '@/others/util'
+  import { getUserImageUrl } from '@/others/util'
 
-const { imgSrc, clickable } = defineProps({
-  imgSrc: {},
-  clickable: { default: true },
-})
+  const { imgSrc, clickable } = defineProps({
+    imgSrc: {},
+    clickable: { default: true },
+  })
 </script>
 
 <template>
@@ -15,10 +15,10 @@ const { imgSrc, clickable } = defineProps({
     @click="clickable ? $emit('clickAvatar') : undefined"
   >
     <v-img
-      :aspect-ratio="1"
-      :src="getUserImageUrl(imgSrc)"
       alt="User Avatar"
+      :aspect-ratio="1"
       cover
+      :src="getUserImageUrl(imgSrc)"
     />
   </v-avatar>
 </template>
