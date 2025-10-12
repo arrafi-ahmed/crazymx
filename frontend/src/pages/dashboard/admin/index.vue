@@ -2,8 +2,8 @@
   import { computed, onMounted } from 'vue'
 
   import { useRoute, useRouter } from 'vue-router'
-  import { useStore } from 'vuex'
   import { useDisplay } from 'vuetify'
+  import { useStore } from 'vuex'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { formatEventDateDisplay, getEventImageUrl } from '@/utils'
@@ -18,7 +18,7 @@
     },
   })
 
-  const {xs} = useDisplay()
+  const { xs } = useDisplay()
   const store = useStore()
   const route = useRoute()
   const router = useRouter()
@@ -63,10 +63,10 @@
               :to="{ name: 'event-add' }"
               variant="outlined"
             >
-               Event
+              Event
             </v-btn>
             <v-btn
-              v-if="xs"
+              v-else
               color="secondary"
               prepend-icon="mdi-plus"
               rounded="xl"
