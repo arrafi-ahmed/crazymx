@@ -2,7 +2,7 @@ CREATE TABLE club
 (
     id       SERIAL PRIMARY KEY,
     name     VARCHAR(100) NOT NULL,
-    location TEXT, --updated
+    location TEXT,
     logo     VARCHAR(255)
 );
 
@@ -24,15 +24,15 @@ CREATE TABLE event
     description        TEXT,
     location           VARCHAR(255),
     registration_count INT,
-    start_datetime      TIMESTAMPZ NOT NULL,  --updated
-    end_datetime        TIMESTAMPZ,           --updated
+    start_datetime      TIMESTAMPZ NOT NULL,
+    end_datetime        TIMESTAMPZ,
     banner             VARCHAR(255),
-    landing_config     JSONB,                               -- Landing page configuration
-    config             JSONB,                               -- Event configuration settings
-    slug               VARCHAR(255) UNIQUE,                 -- Custom URL slug for the event
-    currency           VARCHAR(3)   NOT NULL DEFAULT 'USD', -- Event currency
+    landing_config     JSONB,
+    config             JSONB,
+    slug               VARCHAR(255) UNIQUE,
+    currency           VARCHAR(3)   NOT NULL DEFAULT 'USD',
     tax_amount         INT,
-    tax_type           VARCHAR(20),                                 -- 10=percent, 20=fixed
+    tax_type           VARCHAR(20),
     club_id            INT          NOT NULL REFERENCES club (id) ON DELETE CASCADE,
     created_by         INT          NOT NULL REFERENCES app_user (id)
 );
@@ -42,7 +42,7 @@ CREATE TABLE registration
 (
     id                SERIAL PRIMARY KEY,
     event_id          INT NOT NULL REFERENCES event (id) ON DELETE CASCADE,
-    additional_fields JSONB, -- Additional registration form fields (organization, sector, expectation, etc.)
+    additional_fields JSONB,
     status            BOOLEAN   DEFAULT false,
     created_at        TIMESTAMP DEFAULT NOW(),
     updated_at        TIMESTAMP DEFAULT NOW()
@@ -127,7 +127,7 @@ CREATE TABLE extras
     id          SERIAL PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
     description TEXT,
-    price       INT,   -- added
+    price       INT,
     content     JSONB, -- [{name, quantity}]
     event_id    INT          NOT NULL REFERENCES event (id) ON DELETE CASCADE
 );
@@ -162,7 +162,7 @@ CREATE TABLE orders
     currency                 VARCHAR(3)         NOT NULL DEFAULT 'USD',
     payment_status           VARCHAR(20)        NOT NULL DEFAULT 'pending', -- pending, paid, failed, refunded
     stripe_payment_intent_id VARCHAR(255),
-    items                    JSONB              NOT NULL,                   -- Store order items as JSONB
+    items                    JSONB              NOT NULL,
     registration_id          INT                NOT NULL REFERENCES registration (id) ON DELETE CASCADE,
     event_id                 INT                NOT NULL REFERENCES event (id) ON DELETE CASCADE,
     created_at               TIMESTAMP                   DEFAULT NOW(),

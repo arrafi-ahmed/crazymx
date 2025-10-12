@@ -17,6 +17,7 @@
     },
   })
 
+  const {xs} = useDisplay)
   const store = useStore()
   const route = useRoute()
   const router = useRouter()
@@ -53,6 +54,18 @@
         >
           <template #actions>
             <v-btn
+              v-if="xs"
+              color="secondary"
+              prepend-icon="mdi-plus"
+              rounded="xl"
+              size="large"
+              :to="{ name: 'event-add' }"
+              variant="outlined"
+            >
+               Event
+            </v-btn>
+            <v-btn
+              v-if="xs"
               color="secondary"
               prepend-icon="mdi-plus"
               rounded="xl"

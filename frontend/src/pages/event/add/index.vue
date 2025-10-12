@@ -383,10 +383,11 @@
                 <v-btn
                   color="primary"
                   rounded="xl"
+                  class="ml-1"
                   :size="xs ? 'default' : 'large'"
                   type="submit"
                 >
-                  Create Event
+                  Create
                 </v-btn>
               </div>
             </v-form>
@@ -470,7 +471,7 @@
           <v-spacer />
           <v-btn
             color="secondary"
-            rounded="lg"
+            rounded="xl"
             variant="outlined"
             @click="configDialog = false"
           >
@@ -478,7 +479,7 @@
           </v-btn>
           <v-btn
             color="primary"
-            rounded="lg"
+            rounded="xl"
             variant="flat"
             @click="saveConfig"
           >
