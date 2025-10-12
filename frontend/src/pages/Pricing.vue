@@ -158,7 +158,10 @@
       }
     } else {
       // If no data, redirect back to landing page
-      store.commit('addSnackbar', { text: 'No registration or sponsorship data found. Please register first.', color: 'error' })
+      store.commit('addSnackbar', {
+        text: 'No registration or sponsorship data found. Please register first.',
+        color: 'error',
+      })
       router.push({ name: 'landing' })
     }
 

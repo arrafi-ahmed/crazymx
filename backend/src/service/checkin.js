@@ -133,28 +133,26 @@ exports.validateQrCode = async ({registrationId, attendeeId, qrUuid, eventId}) =
     }
 
     const sql = `
-        SELECT 
-            a.id                                        AS attendee_id,
-            a.first_name,
-            a.last_name,
-            a.email,
-            a.phone,
-            t.title                                     AS ticket_title,
-            r.id                                        AS registration_id,
-            a.qr_uuid,
-            r.status                                    AS registration_status,
-            r.event_id,
-            (CASE WHEN c.attendee_id IS NULL THEN 0 ELSE 1 END) AS is_checked_in
+        SELECT a.id                                                AS attendee_id,
+               a.first_name,
+               a.last_name,
+               a.email,
+               a.phone,
+               t.title                                             AS ticket_title,
+               r.id                                                AS registration_id,
+               a.qr_uuid,
+               r.status                                            AS registration_status,
+               r.event_id,
+               (CASE WHEN c.attendee_id IS NULL THEN 0 ELSE 1 END) AS is_checked_in
         FROM attendees a
-        JOIN registration r           ON a.registration_id = r.id
-        LEFT JOIN ticket t            ON a.ticket_id = t.id
-        LEFT JOIN checkin c           ON c.attendee_id = a.id
+                 JOIN registration r ON a.registration_id = r.id
+                 LEFT JOIN ticket t ON a.ticket_id = t.id
+                 LEFT JOIN checkin c ON c.attendee_id = a.id
         WHERE r.id = $1
           AND r.event_id = $2
           AND r.status = true
           AND a.id = $3
-          AND a.qr_uuid = $4
-        LIMIT 1
+          AND a.qr_uuid = $4 LIMIT 1
     `;
 
     const result = await query(sql, [registrationId, eventId, attendeeId, qrUuid]);

@@ -22,12 +22,12 @@ exports.save = async ({payload, files, currentUser}) => {
         // Update existing club
         const sql = `
             INSERT INTO club (id, name, location, logo)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (id) DO UPDATE SET
+            VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO
+            UPDATE SET
                 name = EXCLUDED.name,
                 location = EXCLUDED.location,
                 logo = EXCLUDED.logo
-            RETURNING *
+                RETURNING *
         `;
         const values = [id, clubData.name, clubData.location, clubData.logo];
         const result = await query(sql, values);
@@ -41,8 +41,7 @@ exports.save = async ({payload, files, currentUser}) => {
         // Create new club
         const sql = `
             INSERT INTO club (name, location, logo)
-            VALUES ($1, $2, $3)
-            RETURNING *
+            VALUES ($1, $2, $3) RETURNING *
         `;
         const values = [clubData.name, clubData.location, clubData.logo];
         const result = await query(sql, values);
@@ -90,9 +89,9 @@ exports.deleteClub = async ({clubId}) => {
     }
 
     const sql = `
-        DELETE FROM club
-        WHERE id = $1
-        RETURNING *
+        DELETE
+        FROM club
+        WHERE id = $1 RETURNING *
     `;
     const result = await query(sql, [clubId]);
 

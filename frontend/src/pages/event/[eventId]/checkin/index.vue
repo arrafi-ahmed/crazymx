@@ -6,7 +6,7 @@
 
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
-  import { formatDateTime } from '@/others/util'
+  import { formatDateTime } from '@/utils'
 
   definePage({
     name: 'event-checkin',
@@ -469,7 +469,7 @@
                 <div class="info-item">
                   <label class="text-caption text-medium-emphasis">Redeemed At</label>
                   <p class="text-body-1 font-weight-medium">
-                    {{ result.scannedAt ? formatDateTime(result.scannedAt) : 'Pending' }}
+                    {{ result.scannedAt ? formatDateTime({input: result.scannedAt}) : 'Pending' }}
                   </p>
                 </div>
               </v-col>
@@ -595,7 +595,7 @@
                 <div class="info-item">
                   <label class="text-caption text-medium-emphasis">Check-in Time</label>
                   <p class="text-body-1 font-weight-medium">
-                    {{ result.checkinTime ? formatDateTime(result.checkinTime) : 'Pending' }}
+                    {{ result.checkinTime ? formatDateTime({input: result.checkinTime}) : 'Pending' }}
                   </p>
                 </div>
               </v-col>
@@ -713,7 +713,7 @@
             <v-divider vertical />
             <div class="text-center">
               <div class="text-h6 font-weight-bold text-secondary">
-                {{ lastScanTime ? formatDateTime(lastScanTime) : 'N/A' }}
+                {{ lastScanTime ? formatDateTime({input: lastScanTime}) : 'N/A' }}
               </div>
               <div class="text-caption text-medium-emphasis">
                 Last Scan

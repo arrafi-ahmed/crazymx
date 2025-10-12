@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, ref } from 'vue'
+  import { computed, ref, watch } from 'vue'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
   const {
@@ -25,10 +25,29 @@
 
   const isDeleted = ref(false)
   const imageDimensions = ref({ width: 0, height: 0 })
+  const imageRef = ref(null)
 
   const hasImage = computed(() => {
     return src && src !== 'null' && src.trim() !== '' && !isDeleted.value
   })
+
+  // Watch for src changes and load image dimensions
+  watch(() => src, newSrc => {
+    if (newSrc && newSrc !== 'null' && newSrc.trim() !== '') {
+      loadImageDimensions(newSrc)
+    }
+  }, { immediate: true })
+
+  function loadImageDimensions (imageSrc) {
+    const img = new Image()
+    img.addEventListener('load', () => {
+      imageDimensions.value = img.naturalWidth > 0 && img.naturalHeight > 0 ? { width: img.naturalWidth, height: img.naturalHeight } : { width: 300, height: 225 }
+    })
+    img.onerror = () => {
+      imageDimensions.value = { width: 300, height: 225 }
+    }
+    img.src = imageSrc
+  }
 
   const imageStyle = computed(() => {
     const { width, height } = imageDimensions.value
@@ -73,7 +92,6 @@
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: '8px',
     }
   })
 
@@ -82,13 +100,10 @@
     emit('delete')
   }
 
-  function onImageLoad (event) {
-    const { naturalWidth, naturalHeight } = event.target
-    imageDimensions.value = { width: naturalWidth, height: naturalHeight }
-  }
-
   function onImageError (error) {
     console.error('Image failed to load:', error)
+    // Set default dimensions when image fails to load
+    imageDimensions.value = { width: 300, height: 225 }
   }
 </script>
 
@@ -97,15 +112,15 @@
     v-if="hasImage"
     class="image-preview-container mb-4"
   >
-    <div class="image-preview border border-4">
+    <div class="image-preview rounded-lg">
       <v-img
+        ref="imageRef"
         alt="Preview"
         class="rounded-lg preview-image"
         cover
         :src="src"
         :style="imageStyle"
         @error="onImageError"
-        @load="onImageLoad"
       />
 
       <!-- Delete Button -->
@@ -131,10 +146,10 @@
   <!-- Deleted State Placeholder -->
   <div
     v-else-if="isDeleted"
-    class="image-preview-container mb-4"
+    class="image-preview-container border border-4 rounded-lg mb-4"
   >
     <div
-      class="image-preview border border-4 rounded-lg"
+      class="image-preview rounded-lg"
       :style="placeholderStyle"
     >
       <div class="placeholder-content">
@@ -169,7 +184,6 @@
   z-index: 2 !important;
   backdrop-filter: blur(4px);
   border: none;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;

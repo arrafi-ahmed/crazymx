@@ -4,9 +4,8 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
-  import { formatPrice } from '@/others/util'
-  import { generateQrData } from '@/others/util.js'
   import $axios from '@/plugins/axios'
+  import { formatPrice, generateQrData } from '@/utils'
 
   definePage({
     name: 'event-register-success-slug',
@@ -101,7 +100,10 @@
                 eventId: response.data.payload.registration?.eventId,
               }
             } else {
-              store.commit('addSnackbar', { text: `QR UUID validation failed. Expected ${attendeeIds.length} attendees, found ${validAttendees.length} valid.`, color: 'error' })
+              store.commit('addSnackbar', {
+                text: `QR UUID validation failed. Expected ${attendeeIds.length} attendees, found ${validAttendees.length} valid.`,
+                color: 'error',
+              })
             }
           }
         } else {

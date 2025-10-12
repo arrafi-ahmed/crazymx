@@ -39,6 +39,7 @@
   function openAddExtrasDialog () {
     addExtrasDialog.value = !addExtrasDialog.value
   }
+
   const addExtrasDialog = ref(false)
   const addExtrasForm = ref(null)
   const isAddExtrasFormValid = ref(true)
@@ -50,6 +51,7 @@
       Object.assign(newExtras, { ...foundExtra })
     }
   }
+
   const editExtrasDialog = ref(false)
   const editExtrasForm = ref(null)
   const isEditExtrasFormValid = ref(true)
@@ -59,6 +61,7 @@
       ...new ExtrasItem(),
     })
   }
+
   async function handleExtrasSave () {
     if (addExtrasDialog.value) {
       await addExtrasForm.value.validate()
@@ -96,6 +99,7 @@
       store.dispatch('event/setExtras', route.params.eventId),
     ])
   }
+
   onMounted(async () => {
     await fetchData()
   })

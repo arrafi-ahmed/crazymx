@@ -5,7 +5,7 @@
   import { useStore } from 'vuex'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { formatDate, getEventImageUrl } from '@/others/util'
+  import { formatEventDateDisplay, getEventImageUrl } from '@/utils'
 
   definePage({
     name: 'dashboard-admin',
@@ -31,18 +31,13 @@
   async function fetchData () {
     await store.dispatch('event/setEvents', currentUser.value.clubId)
   }
+
   onMounted(async () => {
     await fetchData()
   })
 
   function formatEventDates (item) {
-    const start = item?.startDate
-    const end = item?.endDate
-    const isSingleDay = item?.config?.isSingleDayEvent === true
-    if (!start && !end) return 'Date TBA'
-    if (start && (!end || isSingleDay)) return formatDate(start)
-    const sameDay = new Date(start).toDateString() === new Date(end).toDateString()
-    return sameDay ? formatDate(start) : `${formatDate(start)} - ${formatDate(end)}`
+    return formatEventDateDisplay({ event: item, eventConfig: item.config })
   }
 </script>
 
@@ -53,7 +48,7 @@
       <v-col cols="12">
         <PageTitle
           :show-back-button="false"
-          :subtitle="store.state.event.event?.name || 'Manage your event settings'"
+          subtitle="Manage your event settings"
           title="Admin Dashboard"
         >
           <template #actions>
@@ -191,8 +186,8 @@
                   class="px-6"
                   color="primary"
                   prepend-icon="mdi-dots-horizontal"
-                  v-bind="props"
                   rounded="lg"
+                  v-bind="props"
                   variant="outlined"
                 >
                   More Actions

@@ -326,12 +326,10 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
         // For users with QR UUID, validate against attendees table
         sql = `
             SELECT r.*,
-                   COALESCE((
-                       SELECT SUM((item->>'quantity')::int)
-                       FROM orders o
-                                CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
-                       WHERE o.registration_id = r.id
-                   ), 0) as total_attendees,
+                   COALESCE((SELECT SUM((item ->>'quantity')::int)
+                             FROM orders o
+                                      CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+                            WHERE o.registration_id = r.id ), 0) as total_attendees,
                    jsonb_agg(
                            jsonb_build_object(
                                    'id', a.id,
@@ -346,7 +344,7 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
                                    'createdAt', a.created_at,
                                    'updatedAt', a.updated_at
                            )
-                   ) as attendees
+                   )                                             as attendees
             FROM registration r
                      LEFT JOIN attendees a ON r.id = a.registration_id
                      LEFT JOIN ticket t ON a.ticket_id = t.id
@@ -359,12 +357,10 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
         // For logged in users or without QR UUID, just get registration
         sql = `
             SELECT r.*,
-                   COALESCE((
-                       SELECT SUM((item->>'quantity')::int)
-                       FROM orders o
-                                CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
-                       WHERE o.registration_id = r.id
-                   ), 0) as total_attendees,
+                   COALESCE((SELECT SUM((item ->>'quantity')::int)
+                             FROM orders o
+                                      CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
+                            WHERE o.registration_id = r.id ), 0) as total_attendees,
                    jsonb_agg(
                            jsonb_build_object(
                                    'id', a.id,
@@ -379,7 +375,7 @@ exports.getRegistration = async ({registrationId, qrUuid, isLoggedIn}) => {
                                    'createdAt', a.created_at,
                                    'updatedAt', a.updated_at
                            )
-                   ) as attendees
+                   )                                             as attendees
             FROM registration r
                      LEFT JOIN attendees a ON r.id = a.registration_id
                      LEFT JOIN ticket t ON a.ticket_id = t.id
@@ -464,8 +460,8 @@ exports.getRegistrationWEventWExtrasPurchase = async ({registrationId}) => {
                jsonb_build_object(
                        'id', e.id,
                        'name', e.name,
-                       'startDate', e.start_date,
-                       'endDate', e.end_date,
+                       'startDate', e.start_datetime,
+                       'endDate', e.end_datetime,
                        'location', e.location
                )                 AS event,
                COALESCE(jsonb_build_object(

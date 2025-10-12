@@ -6,7 +6,8 @@
   import { useStore } from 'vuex'
   import ImageManager from '@/components/ImageManager.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { generateSlug, getEventImageUrl, toLocalISOString } from '@/others/util'
+  import TimePicker from '@/components/TimePicker.vue'
+  import { generateSlug, getEventImageUrl, mergeDateTime, splitDateTime } from '@/utils'
 
   definePage({
     name: 'event-edit',
@@ -29,7 +30,12 @@
     prefetchedEvent.value?.id ? prefetchedEvent.value : store.state.event.event,
   )
 
-  const newEventInit = reactive({ ...new Event({}) })
+  const newEventInit = reactive({
+    ...new Event({}),
+    dateRange: [new Date(), new Date()],
+    startTime: '00:01',
+    endTime: '23:59',
+  })
   const newEvent = reactive({ ...newEventInit })
 
   const newUpload = ref('')
@@ -68,20 +74,49 @@
       newEvent.slug = generateSlug(newEvent.name)
     }
 
+    if (newEvent.config.isAllDay) {
+      // For all-day events, use just the date part
+      // todo: if all day/no time, set start datetime to startdate + 00.01
+      newEvent.startDatetime = mergeDateTime({ dateStr: newEvent.dateRange[0], timeStr: '00:01', isOutputUTC: true })
+      newEvent.endDatetime = newEvent.config.isSingleDayEvent
+        ? mergeDateTime({ dateStr: newEvent.dateRange[0], timeStr: '23:59', isOutputUTC: true })
+        : mergeDateTime({ dateStr: newEvent.dateRange.at(-1), timeStr: '23:59', isOutputUTC: true })
+    } else {
+      // For timed events, combine date and time
+      newEvent.startDatetime
+        = mergeDateTime({
+          dateStr: newEvent.dateRange[0], timeStr: newEvent.startTime,
+          isOutputUTC:
+            true,
+        })
+      newEvent.endDatetime
+        = newEvent.config.isSingleDayEvent
+          ? mergeDateTime({
+            dateStr: newEvent.dateRange.at(0), timeStr: newEvent.endTime, isOutputUTC:
+              true,
+          })
+          : mergeDateTime({
+            dateStr: newEvent.dateRange.at(-1), timeStr: newEvent.endTime, isOutputUTC:
+              true,
+          })
+    }
+
     const formData = new FormData()
     formData.append('id', newEvent.id)
     formData.append('name', newEvent.name)
     formData.append('description', newEvent.description)
     formData.append('location', newEvent.location)
-    formData.append('startDate', toLocalISOString(newEvent.dateRange[0]).slice(0, 10))
-    formData.append(
-      'endDate',
-      toLocalISOString(newEvent.dateRange.at(-1)).slice(0, 10),
-    )
+    formData.append('startDatetime', newEvent.startDatetime)
+    formData.append('endDatetime', newEvent.endDatetime || '')
+    formData.append('config', JSON.stringify(newEvent.config))
     formData.append('slug', newEvent.slug)
     formData.append('currency', newEvent.currency)
+    formData.append('taxType', newEvent.taxType || 'percent')
+    formData.append('taxAmount', newEvent.taxAmount || 0)
 
-    if (newEvent.banner) formData.append('banner', newEvent.banner)
+    if (newEvent.banner
+    )
+      formData.append('banner', newEvent.banner)
     if (newEvent.rmImage) formData.append('rmImage', newEvent.rmImage)
     if (newUpload.value) formData.append('files', newUpload.value)
 
@@ -95,10 +130,11 @@
       })
     })
   }
+
   async function fetchData () {
     if (!event.value?.id && route.params.eventId) {
       try {
-        await store.dispatch('event/setEventByEventIdnClubId', {
+        await store.dispatch('event/setEvent', {
           eventId: route.params.eventId,
           clubId: currentUser.value?.clubId,
         })
@@ -108,53 +144,26 @@
       }
     }
   }
-  // Helper function to safely parse dates
-  function parseDate (dateValue) {
-    if (!dateValue) return new Date()
-
-    try {
-      const date = new Date(dateValue)
-      return isNaN(date.getTime()) ? new Date() : date
-    } catch {
-      return new Date()
-    }
-  }
 
   onMounted(async () => {
     try {
       await fetchData()
 
       // Wait for event data to be available
-      if (event.value && event.value.id) {
+      if (event.value) {
         Object.assign(newEvent, {
           ...event.value,
-          dateRange: [parseDate(event.value.startDate), parseDate(event.value.endDate)],
         })
-      } else {
-        // If event data is not available, try to fetch it once more
-        await store.dispatch('event/setEvent', {
-          eventId: route.params.eventId,
-        })
-
-        if (store.state.event.event && store.state.event.event.id) {
-          Object.assign(newEvent, {
-            ...store.state.event.event,
-            dateRange: [
-              parseDate(store.state.event.event.startDate),
-              parseDate(store.state.event.event.endDate),
-            ],
-          })
-        } else {
-          // If still no event found, redirect to dashboard
-          console.error('Event not found:', route.params.eventId)
-          router.push({ name: 'dashboard-admin' })
-          return
-        }
+        const startDateTime = splitDateTime({ inputDate: event.value.startDatetime })
+        const endDateTime = splitDateTime({ inputDate: event.value.endDatetime })
+        newEvent.dateRange[0] = startDateTime.dateStr
+        newEvent.dateRange[1] = endDateTime?.dateStr || startDateTime.dateStr
+        newEvent.startTime = startDateTime.timeStr.slice(0, 5)
+        newEvent.endTime = endDateTime?.timeStr.slice(0, 5) || '23:59'
       }
     } catch (error) {
       console.error('Error loading event:', error)
-      router.push({ name: 'dashboard-admin' })
-      return
+    // return router.push({ name: 'dashboard-admin' })
     } finally {
       isLoading.value = false
     }
@@ -282,11 +291,28 @@
                 variant="solo"
                 @click:append-inner="newEvent.slug = generateSlug(newEvent.name)"
               />
+              <v-date-input
+                v-if="newEvent.config.isSingleDayEvent"
+                v-model="newEvent.dateRange[0]"
+                class="mb-4"
+                color="primary"
+                hide-details="auto"
+                label="Event Date"
+                prepend-icon=""
+                prepend-inner-icon="mdi-calendar"
+                :rules="[
+                  (v) => !!v || 'Date is required!',
+                ]"
+                show-adjacent-months
+                variant="solo"
+              />
 
               <v-date-input
+                v-else
                 v-model="newEvent.dateRange"
                 class="mb-4"
                 color="primary"
+                hide-details="auto"
                 label="Event Date"
                 multiple="range"
                 prepend-icon=""
@@ -304,7 +330,29 @@
                 variant="solo"
               />
 
-              <v-row class="mt-n8 mb-2">
+              <!-- Time Pickers (only show when not all day) -->
+              <v-row v-if="!newEvent.config.isAllDay" class="mb-2">
+                <v-col cols="12" md="6">
+                  <TimePicker
+                    v-model="newEvent.startTime"
+                    density="comfortable"
+                    label="Start Time"
+                    show-icon
+                    variant="solo"
+                  />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <TimePicker
+                    v-model="newEvent.endTime"
+                    density="comfortable"
+                    label="End Time"
+                    show-icon
+                    variant="solo"
+                  />
+                </v-col>
+              </v-row>
+
+              <v-row class="mt-n4 mb-2">
                 <v-col
                   cols="12"
                   md="6"

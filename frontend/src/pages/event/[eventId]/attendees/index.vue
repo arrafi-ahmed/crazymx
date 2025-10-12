@@ -7,15 +7,7 @@
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import NoItemsFound from '@/components/NoItemsFound.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import {
-    checkinItems,
-    clientBaseUrl,
-    deepCopy,
-    extrasItems,
-    formatDateTime,
-    padStr,
-    sendToWhatsapp,
-  } from '@/others/util'
+  import { checkinItems, clientBaseUrl, deepCopy, extrasItems, formatDateTime, padStr, sendToWhatsapp } from '@/utils'
 
   definePage({
     name: 'event-attendees',
@@ -383,7 +375,7 @@
                 {{ getAttendeeEmail(item) }}
               </td>
               <td v-if="!xs">
-                {{ formatDateTime(item.registrationCreatedAt) }}
+                {{ formatDateTime({input: item.registrationCreatedAt}) }}
               </td>
               <td class="text-capitalize">
                 <v-chip
@@ -597,7 +589,7 @@ title="Voucher QR Code"
               <td class="rowTitle font-weight-medium">
                 Registration Time
               </td>
-              <td>{{ formatDateTime(editingAttendee.registrationCreatedAt) }}</td>
+              <td>{{ formatDateTime({input: editingAttendee.registrationCreatedAt}) }}</td>
             </tr>
           </tbody>
         </v-table>
@@ -655,7 +647,7 @@ title="Voucher QR Code"
               <td class="rowTitle font-weight-medium">
                 Check-in Time
               </td>
-              <td>{{ formatDateTime(editingAttendee.checkinTime) }}</td>
+              <td>{{ formatDateTime({input: editingAttendee.checkinTime}) }}</td>
             </tr>
           </tbody>
         </v-table>

@@ -1,6 +1,8 @@
 /**
  * Event model class
  */
+import { EventConfig } from './EventConfig'
+
 export class Event {
   constructor (data = {}) {
     this.id = data.id || null
@@ -8,36 +10,32 @@ export class Event {
     this.description = data.description || ''
     this.location = data.location || ''
     this.registrationCount = data.registrationCount || null
-    this.startDate = data.startDate || null
-    this.endDate = data.endDate || null
+    this.startDatetime = data.startDatetime || null
+    this.endDatetime = data.endDatetime || null
     this.banner = data.banner || null
     this.landingConfig = data.landingConfig || null
     this.slug = data.slug || null
     this.currency = data.currency || 'USD'
-    this.taxAmount = data.taxAmount || null
-    this.taxType = data.taxType || null
+    this.taxAmount = data.taxAmount || 0
+    this.taxType = data.taxType || 'percent'
     this.clubId = data.clubId || null
     this.createdBy = data.createdBy || null
 
     // Configuration fields
-    this.config = data.config || {
-      maxTicketsPerRegistration: 10,
-      saveAllAttendeesDetails: true,
-      isSingleDayEvent: true,
-    }
+    this.config = data.config ? new EventConfig(data.config).toJSON() : new EventConfig().toJSON()
   }
 
   /**
    * Check if event is currently active (between start and end dates)
    */
   isActive () {
-    if (!this.startDate || !this.endDate) {
+    if (!this.startDatetime || !this.endDatetime) {
       return false
     }
 
-    const now = new Date()
-    const start = new Date(this.startDate)
-    const end = new Date(this.endDate)
+    const now = new Datetime()
+    const start = new Datetime(this.startDatetime)
+    const end = new Datetime(this.endDatetime)
 
     return now >= start && now <= end
   }
@@ -46,12 +44,12 @@ export class Event {
    * Check if event is upcoming
    */
   isUpcoming () {
-    if (!this.startDate) {
+    if (!this.startDatetime) {
       return false
     }
 
-    const now = new Date()
-    const start = new Date(this.startDate)
+    const now = new Datetime()
+    const start = new Datetime(this.startDatetime)
 
     return now < start
   }
@@ -60,12 +58,12 @@ export class Event {
    * Check if event is past
    */
   isPast () {
-    if (!this.endDate) {
+    if (!this.endDatetime) {
       return false
     }
 
-    const now = new Date()
-    const end = new Date(this.endDate)
+    const now = new Datetime()
+    const end = new Datetime(this.endDatetime)
 
     return now > end
   }
@@ -100,17 +98,17 @@ export class Event {
       errors.push('Name must be 100 characters or less')
     }
 
-    if (!this.startDate) {
+    if (!this.startDatetime) {
       errors.push('Start date is required')
     }
 
-    if (!this.endDate) {
+    if (!this.endDatetime) {
       errors.push('End date is required')
     }
 
-    if (this.startDate && this.endDate) {
-      const start = new Date(this.startDate)
-      const end = new Date(this.endDate)
+    if (this.startDatetime && this.endDatetime) {
+      const start = new Datetime(this.startDatetime)
+      const end = new Datetime(this.endDatetime)
       if (start > end) {
         errors.push('Start date must be before end date')
       }
@@ -144,8 +142,8 @@ export class Event {
       description: this.description,
       location: this.location,
       registrationCount: this.registrationCount,
-      startDate: this.startDate,
-      endDate: this.endDate,
+      startDatetime: this.startDatetime,
+      endDatetime: this.endDatetime,
       banner: this.banner,
       landingConfig: this.landingConfig,
       slug: this.slug,

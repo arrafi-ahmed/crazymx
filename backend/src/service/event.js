@@ -107,25 +107,28 @@ exports.save = async ({payload, files, currentUser}) => {
             newEvent.slug = await generateUniqueSlug(newEvent.name, newEvent.id);
         }
     }
-
     if (shouldCreate) {
         const sql = `
-            INSERT INTO event (name, description, start_date, end_date, location, banner, slug, currency, club_id,
-                               created_by, registration_count)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *
+            INSERT INTO event (name, description, start_datetime, end_datetime, location, banner, slug, currency,
+                               tax_type, tax_amount, club_id,
+                               created_by, registration_count, config)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *
         `;
         const values = [
             newEvent.name,
             newEvent.description,
-            newEvent.startDate,
-            newEvent.endDate,
+            newEvent.startDatetime,
+            newEvent.endDatetime && newEvent.endDatetime !== '' ? newEvent.endDatetime : null, // Allow null for single day events
             newEvent.location,
             newEvent.banner,
             newEvent.slug,
             newEvent.currency || 'USD',
+            newEvent.taxType,
+            newEvent.taxAmount,
             newEvent.clubId,
             newEvent.createdBy,
             newEvent.registrationCount,
+            newEvent.config
         ];
         const result = await query(sql, values);
         return result.rows[0];
@@ -134,25 +137,31 @@ exports.save = async ({payload, files, currentUser}) => {
             UPDATE event
             SET name           = $1,
                 description    = $2,
-                start_date     = $3,
-                end_date       = $4,
+                start_datetime = $3,
+                end_datetime   = $4,
                 location       = $5,
                 banner         = $6,
                 landing_config = $7,
                 slug           = $8,
-                currency       = $9
-            WHERE id = $10 RETURNING *
+                currency       = $9,
+                tax_type       = $10,
+                tax_amount     = $11,
+                config         = $12
+            WHERE id = $13 RETURNING *
         `;
         const values = [
             newEvent.name,
             newEvent.description,
-            newEvent.startDate,
-            newEvent.endDate,
+            newEvent.startDatetime,
+            newEvent.endDatetime && newEvent.endDatetime !== '' ? newEvent.endDatetime : null, // Allow null for single day events
             newEvent.location,
             newEvent.banner,
-            JSON.stringify(newEvent.landingConfig || {}),
+            newEvent.landingConfig,
             newEvent.slug,
             newEvent.currency || 'USD',
+            newEvent.taxType,
+            newEvent.taxAmount,
+            newEvent.config,
             newEvent.id,
         ];
         const result = await query(sql, values);
@@ -360,7 +369,7 @@ exports.getAllEvents = async ({clubId}) => {
         SELECT *
         FROM event
         WHERE club_id = $1
-        ORDER BY id DESC`;
+        ORDER BY start_datetime ASC`;
     const result = await query(sql, [clubId]);
     return result.rows;
 };
@@ -380,8 +389,11 @@ exports.getAllActiveEvents = async ({clubId, currentDate}) => {
         SELECT *
         FROM event
         WHERE club_id = $1
-          AND $2::date < end_date
-        ORDER BY id DESC;
+          AND (
+            (end_datetime IS NOT NULL AND $2::date < end_datetime) OR
+            (end_datetime IS NULL AND $2::date >= start_datetime::date)
+            )
+        ORDER BY start_datetime ASC;
     `;
     const results = await query(sql, [clubId, currentDate]);
     return results.rows;
@@ -392,8 +404,8 @@ exports.getFirstEvent = async () => {
         SELECT e.*, c.name as club_name, c.location as club_location, c.logo as club_logo
         FROM event e
                  JOIN club c ON e.club_id = c.id
-        WHERE e.start_date >= CURRENT_DATE
-        ORDER BY e.start_date ASC LIMIT 1
+        WHERE e.start_datetime >= CURRENT_DATE
+        ORDER BY e.start_datetime ASC LIMIT 1
     `;
     const result = await query(sql);
     return result.rows[0];
@@ -411,7 +423,6 @@ exports.saveConfig = async ({payload, currentUser}) => {
     //           AND club_id = $2
     //     `;
     //     const result = await query(sql, [eventId, currentUser.clubId]);
-    //     console.log(1, payload, currentUser, result.rows[0])
     //     const existingEvent = result.rows[0];
     //     if (!existingEvent || !existingEvent.id) {
     //         throw new CustomError("Access denied", 401);

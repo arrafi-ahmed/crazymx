@@ -4,7 +4,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
-  import { formatDate, formatDateTime, getApiPublicImageUrl, getClientPublicImageUrl } from '@/others/util'
+  import { formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
 
   definePage({
     name: 'event-landing-slug',
@@ -35,21 +35,9 @@
 
   // Hero subtitle: "{{datetime}} — at {{location}}."
   const eventDateSubtitle = computed(() => {
-    const start = event.value?.startDate
-    const end = event.value?.endDate
     const loc = event.value?.location || 'TBA'
-    const isSingleDay = event.value?.config?.isSingleDayEvent === true
-
-    if (start && end) {
-      if (isSingleDay) return `${formatDate(start)} @ ${loc}.`
-      const sameDay = new Date(start).toDateString() === new Date(end).toDateString()
-      const datePart = sameDay ? `${formatDate(start)}` : `${formatDate(start)} - ${formatDate(end)}`
-      return `${datePart} @ ${loc}.`
-    }
-    if (start) {
-      return `${formatDate(start)} @ ${loc}.`
-    }
-    return `Date TBA @ ${loc}.`
+    const formattedDate = formatEventDateDisplay({ event: event.value, eventConfig: event.value?.config })
+    return `${formattedDate} @ ${loc}.`
   })
 
   const attendeeInit = ref({
@@ -277,8 +265,14 @@
   background: rgb(var(--v-theme-surface));
 }
 
-.hero-wrap { max-width: 1100px; margin: 0 auto; }
-.hero-media { position: relative; }
+.hero-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hero-media {
+  position: relative;
+}
 
 .hero-img {
   width: 100%;
@@ -290,7 +284,7 @@
 .hero-overlay-grad {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.15) 40%, rgba(0, 0, 0, 0) 100%);
   pointer-events: none;
 }
 

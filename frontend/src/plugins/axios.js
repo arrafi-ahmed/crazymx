@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { HTTP_STATUS } from '@/others/constants'
 import router from '@/router'
 import store from '@/store'
+import { HTTP_STATUS } from '@/utils'
 
 const $axios = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,

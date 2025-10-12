@@ -2,7 +2,7 @@ const handlebars = require("handlebars");
 const fs = require("fs");
 const path = require("path");
 const {generateQrCode, appInfo, generateQrData} = require("../others/util");
-const {formatTime, formatDateToMonDD} = require("../others/util");
+const {formatTime, formatDateToMonDD, formatEventDateTime} = require("../others/util");
 const {createTransport} = require("nodemailer");
 const registrationService = require("./registration");
 const CustomError = require("../model/CustomError");
@@ -122,14 +122,25 @@ exports.sendTicketByAttendeeId = async ({attendeeId}) => {
     }
 
     const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+    const isAllDay = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
+    const dateFormat = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
     const sameDay = event?.startDate && event?.endDate
         ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
         : false;
+
     const eventDateDisplay = (() => {
         if (!event?.startDate && !event?.endDate) return 'Date TBA';
-        if ((isSingleDay || sameDay) && event?.startDate) return formatDateToMonDD(event.startDate);
-        if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
-        return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+
+        // For all-day events, remove time from format
+        const formatToUse = isAllDay ? dateFormat.replace(/ HH:mm|HH:mm/g, '') : dateFormat;
+
+        if ((isSingleDay || sameDay) && event?.startDate) {
+            return formatEventDateTime(event.startDate, formatToUse);
+        }
+        if (event?.startDate && event?.endDate) {
+            return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
+        }
+        return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
     })();
 
     const html = compileTicketTemplate({
@@ -207,14 +218,25 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
         }
 
         const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+        const isAllDay = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
+        const dateFormat = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
         const sameDay = event?.startDate && event?.endDate
             ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
             : false;
+
         const eventDateDisplay = (() => {
             if (!event?.startDate && !event?.endDate) return 'Date TBA';
-            if ((isSingleDay || sameDay) && event?.startDate) return formatDateToMonDD(event.startDate);
-            if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
-            return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+
+            // For all-day events, remove time from format
+            const formatToUse = isAllDay ? dateFormat.replace(/ HH:mm|HH:mm/g, '') : dateFormat;
+
+            if ((isSingleDay || sameDay) && event?.startDate) {
+                return formatEventDateTime(event.startDate, formatToUse);
+            }
+            if (event?.startDate && event?.endDate) {
+                return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
+            }
+            return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
         })();
 
         const html = compileTicketTemplate({
@@ -281,14 +303,25 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
             }
 
             const isSingleDayEach = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
+            const isAllDayEach = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
+            const dateFormatEach = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
             const sameDayEach = event?.startDate && event?.endDate
                 ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
                 : false;
+
             const eventDateDisplayEach = (() => {
                 if (!event?.startDate && !event?.endDate) return 'Date TBA';
-                if ((isSingleDayEach || sameDayEach) && event?.startDate) return formatDateToMonDD(event.startDate);
-                if (event?.startDate && event?.endDate) return `${formatDateToMonDD(event.startDate)} – ${formatDateToMonDD(event.endDate)}`;
-                return event?.startDate ? formatDateToMonDD(event.startDate) : formatDateToMonDD(event.endDate);
+
+                // For all-day events, remove time from format
+                const formatToUse = isAllDayEach ? dateFormatEach.replace(/ HH:mm|HH:mm/g, '') : dateFormatEach;
+
+                if ((isSingleDayEach || sameDayEach) && event?.startDate) {
+                    return formatEventDateTime(event.startDate, formatToUse);
+                }
+                if (event?.startDate && event?.endDate) {
+                    return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
+                }
+                return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
             })();
 
             const html = compileTicketTemplate({

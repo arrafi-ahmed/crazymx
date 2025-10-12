@@ -25,14 +25,17 @@
     fullSize.value = false
     dialog.value = !dialog.value
   }
+
   function switchFullsize () {
     fullSize.value = !fullSize.value
   }
+
   function getPrevImage () {
     if (currIndex.value === 0) return
     currIndex.value = currIndex.value - 1
     currImg.value = imgSet[currIndex.value]
   }
+
   function getNextImage () {
     if (currIndex.value === imgSet.length - 1) return
     currIndex.value = currIndex.value + 1

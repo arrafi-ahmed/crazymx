@@ -3,7 +3,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import Logo from '@/components/Logo.vue'
-  import { getClientPublicImageUrl, getToLink } from '@/others/util'
+  import { getClientPublicImageUrl, getToLink } from '@/utils'
 
   const store = useStore()
   const router = useRouter()
@@ -158,7 +158,7 @@
   })
 
   function handleLogoClick () {
-    window.location.assign('https://tucsoncathedralconcerts.org/')
+    router.push({ name: 'homepage' })
   }
 
   const getFirstName = computed(() => (currentUser.value?.fullName || '').split(' ')[0] || '')
@@ -235,8 +235,9 @@
             <Logo
               :container-class="`rounded-lg pa-2 ${isScrolled ? 'bg-transparent' : 'bg-gradient'}`"
               :img-src="getClientPublicImageUrl('logo.webp')"
-              :style="{ opacity: 1 }"
+              :style="{ opacity: 1, cursor: 'pointer' }"
               :width="180"
+              @click="handleLogoClick"
             />
           </div>
 

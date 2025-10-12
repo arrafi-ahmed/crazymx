@@ -4,7 +4,6 @@
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
-  import { toLocalISOString } from '@/others/util'
 
   definePage({
     name: 'event-statistics',
@@ -25,7 +24,7 @@
 
   function handleChangeDateStat (date) {
     store.dispatch('checkin/setStatistics', {
-      date: toLocalISOString(date),
+      date: new Date({ inputDate: date }),
       eventId: route.params.eventId,
     })
   }
@@ -33,7 +32,7 @@
   onMounted(() => {
     inputDate.value = new Date()
     store.dispatch('checkin/setStatistics', {
-      date: toLocalISOString(inputDate.value),
+      date: new Date({ inputDate: inputDate.value }),
       eventId: route.params.eventId,
     })
   })

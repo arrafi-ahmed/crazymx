@@ -103,7 +103,6 @@ export const actions = {
   },
   setEventBySlug ({ commit }, request) {
     return new Promise((resolve, reject) => {
-      console.log(55, request)
       $axios
         .get('/event/getEventBySlug', {
           params: { slug: request.slug },

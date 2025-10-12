@@ -1,7 +1,7 @@
 <script setup>
   import { defineEmits, defineProps, ref, watch } from 'vue'
   import Phone from '@/components/Phone.vue'
-  import { isValidEmail } from '@/others/util'
+  import { isValidEmail } from '@/utils'
 
   const { items, overAllIndex, quantityIndex, type } = defineProps([
     'items',

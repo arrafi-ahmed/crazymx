@@ -1,6 +1,6 @@
 <script setup>
   import { defineEmits, defineProps, ref, watch } from 'vue'
-  import { getInputType } from '@/others/util'
+  import { getInputType } from '@/utils'
 
   const { items } = defineProps(['items'])
   const inputResponses = ref([])

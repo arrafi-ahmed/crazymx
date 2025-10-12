@@ -1,7 +1,7 @@
 <script setup>
   import { defineEmits, defineProps, ref, watch } from 'vue'
   import { useDisplay } from 'vuetify'
-  import { formatDate } from '@/others/util'
+  import { formatDate } from '@/utils'
 
   const model = defineModel()
   const { width, height, xs } = useDisplay()
@@ -21,11 +21,12 @@
     emit('update:modelValue', new Date(newDate))
     emit('updateDate', new Date(newDate))
   }
+
   watch(
     () => model.value,
     newVal => {
       selectedDate.value = new Date(newVal)
-      selectedDate.value = newVal ? formatDate(newVal) : ''
+      selectedDate.value = newVal ? formatDate({ input: newVal }) : ''
     },
   )
   watch(

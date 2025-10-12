@@ -1,6 +1,6 @@
 import fileSaver from 'file-saver'
-import { deepMerge } from '@/others/util'
 import $axios from '@/plugins/axios'
+import { deepMerge } from '@/utils'
 
 export const namespaced = true
 

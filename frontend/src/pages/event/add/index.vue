@@ -5,7 +5,10 @@
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
-  import { generateSlug, toLocalISOString } from '@/others/util'
+  import TimePicker from '@/components/TimePicker.vue'
+  import { Event } from '@/models/Event'
+  import { EventConfig } from '@/models/EventConfig'
+  import { generateSlug, mergeDateTime } from '@/utils'
 
   definePage({
     name: 'event-add',
@@ -21,24 +24,28 @@
   const router = useRouter()
   const store = useStore()
 
-  const newEventInit = {
-    name: '',
-    description: '',
-    location: '',
+  const newEventInit = reactive({
+    ...new Event({}),
     dateRange: [new Date(), new Date()],
-    banner: '',
-    slug: '',
-    currency: '',
-    clubId: '',
-    createdBy: '',
-    landingConfig: {},
-    taxType: 'percent',
-    taxAmount: 0,
-  }
+    startTime: '09:00',
+    endTime: '17:00',
+  })
   const newEvent = reactive({ ...newEventInit })
 
+  const configDialog = ref(false)
+  const config = reactive({ ...new EventConfig() })
   const form = ref(null)
   const isFormValid = ref(true)
+
+  const dateFormatOptions = [
+    { title: 'MM/DD/YYYY HH:mm (12/25/2024 14:30)', value: 'MM/DD/YYYY HH:mm' },
+    { title: 'MM/DD/YYYY (12/25/2024)', value: 'MM/DD/YYYY' },
+    { title: 'DD/MM/YYYY (25/12/2024)', value: 'DD/MM/YYYY' },
+    { title: 'YYYY-MM-DD (2024-12-25)', value: 'YYYY-MM-DD' },
+    { title: 'MMM DD, YYYY (Dec 25, 2024)', value: 'MMM DD, YYYY' },
+    { title: 'MMMM DD, YYYY (December 25, 2024)', value: 'MMMM DD, YYYY' },
+    { title: 'DD MMM YYYY (25 Dec 2024)', value: 'DD MMM YYYY' },
+  ]
 
   function handleEventBanner (file) {
     newEvent.banner = file
@@ -54,6 +61,27 @@
     },
   )
 
+  // Watch for config changes to update the event config
+  watch(
+    () => config,
+    newConfig => {
+      newEvent.config = { ...newConfig }
+    },
+    { deep: true },
+  )
+
+  function openConfigDialog () {
+    // Sync current config with dialog
+    Object.assign(config, newEvent.config)
+    configDialog.value = true
+  }
+
+  function saveConfig () {
+    // Update event config with dialog values
+    newEvent.config = { ...config }
+    configDialog.value = false
+  }
+
   async function handleAddEvent () {
     await form.value.validate()
     if (!isFormValid.value) return
@@ -63,23 +91,47 @@
       newEvent.slug = generateSlug(newEvent.name)
     }
 
+    if (newEvent.config.isAllDay) {
+      // For all-day events, use just the date part
+      newEvent.startDatetime = mergeDateTime({ dateStr: newEvent.dateRange[0], timeStr: '00:01', isOutputUTC: true })
+      newEvent.endDatetime = newEvent.config.isSingleDayEvent
+        ? mergeDateTime({ dateStr: newEvent.dateRange[0], timeStr: '23:59', isOutputUTC: true })
+        : mergeDateTime({ dateStr: newEvent.dateRange.at(-1), timeStr: '23:59', isOutputUTC: true })
+    } else {
+      // For timed events, combine date and time
+      newEvent.startDatetime = mergeDateTime({
+        dateStr: newEvent.dateRange[0],
+        timeStr: newEvent.startTime,
+        isOutputUTC: true,
+      })
+      newEvent.endDatetime = newEvent.config.isSingleDayEvent
+        ? mergeDateTime({
+          dateStr: newEvent.dateRange.at(0),
+          timeStr: newEvent.endTime,
+          isOutputUTC: true,
+        })
+        : mergeDateTime({
+          dateStr: newEvent.dateRange.at(-1),
+          timeStr: newEvent.endTime,
+          isOutputUTC: true,
+        })
+    }
+
     const formData = new FormData()
     formData.append('name', newEvent.name)
     formData.append('description', newEvent.description)
     formData.append('location', newEvent.location)
-    formData.append('startDate', toLocalISOString(newEvent.dateRange[0]).slice(0, 10))
-    formData.append(
-      'endDate',
-      toLocalISOString(newEvent.dateRange.at(-1)).slice(0, 10),
-    )
+    formData.append('startDatetime', newEvent.startDatetime)
+    formData.append('endDatetime', newEvent.endDatetime || '')
+    formData.append('config', JSON.stringify(newEvent.config))
     formData.append('slug', newEvent.slug)
     formData.append('currency', newEvent.currency)
-    formData.append('landingConfig', JSON.stringify(newEvent.landingConfig))
+    formData.append('taxType', newEvent.taxType)
+    formData.append('taxAmount', newEvent.taxAmount)
 
     if (newEvent.banner) formData.append('files', newEvent.banner)
 
     store.dispatch('event/save', formData).then(result => {
-      // newEvent = {...newEvent, ...newEventInit}
       Object.assign(newEvent, {
         ...newEventInit,
       })
@@ -96,8 +148,7 @@
     <v-row class="mb-6">
       <v-col cols="12">
         <PageTitle
-          subtitle="Set up your event details and configuration"
-          title="Create New Event"
+          title="Add Event"
         />
       </v-col>
     </v-row>
@@ -209,10 +260,68 @@
                 show-adjacent-months
                 variant="solo"
               />
-              <v-row
-                class=" mb-4"
-                no-gutters
-              >
+
+              <v-date-input
+                v-if="newEvent.config.isSingleDayEvent"
+                v-model="newEvent.dateRange[0]"
+                class="mb-4"
+                color="primary"
+                hide-details="auto"
+                label="Event Date"
+                prepend-icon=""
+                prepend-inner-icon="mdi-calendar"
+                :rules="[
+                  (v) => !!v || 'Date is required!',
+                ]"
+                show-adjacent-months
+                variant="solo"
+              />
+
+              <v-date-input
+                v-else
+                v-model="newEvent.dateRange"
+                class="mb-4"
+                color="primary"
+                hide-details="auto"
+                label="Event Date"
+                multiple="range"
+                prepend-icon=""
+                prepend-inner-icon="mdi-calendar"
+                :rules="[
+                  (v) => !!v || 'Date range is required!',
+                  (v) =>
+                    (v && Array.isArray(v) && v.length >= 2) ||
+                    'Please select both start and end dates',
+                  (v) =>
+                    (v && Array.isArray(v) && v.length >= 2 && v[0] <= v[v.length - 1]) ||
+                    'Start date must be before end date',
+                ]"
+                show-adjacent-months
+                variant="solo"
+              />
+
+              <!-- Time Pickers (only show when not all day) -->
+              <v-row v-if="!newEvent.config.isAllDay" class="mb-2">
+                <v-col cols="12" md="6">
+                  <TimePicker
+                    v-model="newEvent.startTime"
+                    density="comfortable"
+                    label="Start Time"
+                    show-icon
+                    variant="solo"
+                  />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <TimePicker
+                    v-model="newEvent.endTime"
+                    density="comfortable"
+                    label="End Time"
+                    show-icon
+                    variant="solo"
+                  />
+                </v-col>
+              </v-row>
+              <v-row class="mt-n4 mb-2">
                 <v-col
                   cols="12"
                   md="6"
@@ -238,7 +347,6 @@
                 >
                   <v-text-field
                     v-model.number="newEvent.taxAmount"
-                    class="mb-2"
                     density="comfortable"
                     hide-details="auto"
                     label="Tax Amount"
@@ -250,27 +358,35 @@
               </v-row>
               <v-file-upload
                 accept="image/*"
-                class="mb-4"
+                class="mt-2 mt-md-4"
                 clearable
                 density="compact"
                 rounded
                 show-size
-                title="Event Banner"
+                title="Upload Banner"
                 variant="solo"
                 @update:model-value="handleEventBanner"
               />
 
-              <v-divider class="my-6" />
-              <div class="d-flex justify-end">
+              <div class="d-flex align-center mt-3 mt-md-4">
+                <v-btn
+                  color="secondary"
+                  prepend-icon="mdi-cog"
+                  rounded="xl"
+                  :size="xs ? 'default' : 'large'"
+                  variant="outlined"
+                  @click="openConfigDialog"
+                >
+                  Configuration
+                </v-btn>
+                <v-spacer />
                 <v-btn
                   color="primary"
-                  prepend-icon="mdi-plus"
                   rounded="xl"
-                  size="large"
+                  :size="xs ? 'default' : 'large'"
                   type="submit"
-                  variant="elevated"
                 >
-                  Create
+                  Create Event
                 </v-btn>
               </div>
             </v-form>
@@ -278,6 +394,99 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Configuration Dialog -->
+    <v-dialog
+      v-model="configDialog"
+      max-width="600"
+      persistent
+    >
+      <v-card>
+        <v-card-title class="text-h5 pa-6 pb-0">
+          Event Configuration
+        </v-card-title>
+
+        <v-card-text class="pa-6">
+          <v-form @submit.prevent="saveConfig">
+            <v-number-input
+              v-model.number="config.maxTicketsPerRegistration"
+              control-variant="default"
+              :hide-input="false"
+              inset
+              label="Max Ticket Purchase Per Registration"
+              prepend-inner-icon="mdi-ticket"
+              :reverse="false"
+              :rules="[(v) => v > 0 || 'Must be greater than 0']"
+              variant="solo"
+            />
+
+            <v-switch
+              v-model="config.saveAllAttendeesDetails"
+              class="mb-4"
+              color="primary"
+              glow
+              hint="When enabled, details of all attendees will be saved. When disabled, only the primary attendee (form filler) details will be saved."
+              inset
+              label="Save Details of All Attendees"
+              persistent-hint
+            />
+
+            <v-switch
+              v-model="config.isAllDay"
+              class="mb-4"
+              color="primary"
+              glow
+              hint="Enable if this event lasts the entire day (no specific start or end time)."
+              inset
+              label="All Day Event"
+              persistent-hint
+            />
+
+            <v-switch
+              v-model="config.isSingleDayEvent"
+              class="mb-4"
+              color="primary"
+              glow
+              hint="Turn off if this event continues for multiple days."
+              inset
+              label="Single Day Event"
+              persistent-hint
+            />
+
+            <v-select
+              v-model="config.dateFormat"
+              class="mb-4"
+              hint="Choose how dates will be displayed on customer-facing pages"
+              :items="dateFormatOptions"
+              label="Date Format"
+              persistent-hint
+              prepend-inner-icon="mdi-calendar"
+              variant="solo"
+            />
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions class="pa-6 pt-0">
+          <v-spacer />
+          <v-btn
+            color="secondary"
+            rounded="lg"
+            variant="outlined"
+            @click="configDialog = false"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            rounded="lg"
+            variant="flat"
+            @click="saveConfig"
+          >
+            Save
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 

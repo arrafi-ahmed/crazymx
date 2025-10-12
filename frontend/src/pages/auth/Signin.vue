@@ -3,7 +3,7 @@
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
-  import { isValidEmail } from '@/others/util'
+  import { isValidEmail } from '@/utils'
 
   definePage({
     name: 'signin',
@@ -39,6 +39,7 @@
         router.push(calcHome.value)
       })
   }
+
   const dialog = ref(false)
   const resetEmail = ref(null)
   const resetForm = ref(null)

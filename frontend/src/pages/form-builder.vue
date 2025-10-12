@@ -6,7 +6,7 @@
   import { useStore } from 'vuex'
   import FormItemsEditable from '@/components/FormItemsEditable.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { input_fields } from '@/others/util'
+  import { input_fields } from '@/utils'
 
   definePage({
     name: 'form-builder',
@@ -42,6 +42,7 @@
   const isQuestionOptionsRequired = computed(() => {
     return selectedFormItemType.id != 0 && selectedFormItemType.id != 1
   })
+
   function openDialog (itemTypeId) {
     Object.assign(question, { ...questionInit, options: [] })
     dialog.value = !dialog.value
@@ -94,11 +95,13 @@
   }
 
   const additionalAnswers = ref([])
+
   function handleUpdateAdditionalAnswers ({ newVal }) {
     additionalAnswers.value = newVal
   }
 
   const rmQIds = []
+
   function handleRemoveQuestion (qId, index) {
     if (qId) {
       const filteredQuestions = newFormQuestions.value.filter(item => item.id != qId)

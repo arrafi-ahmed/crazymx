@@ -6,7 +6,7 @@
   import { useStore } from 'vuex'
   import ImageManager from '@/components/ImageManager.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { getClubImageUrl, isValidImage } from '@/others/util'
+  import { getClubImageUrl, isValidImage } from '@/utils'
 
   definePage({
     name: 'club-edit',
@@ -87,11 +87,13 @@
       })
     })
   }
+
   async function fetchData () {
     if (!club.value?.id) {
       await store.dispatch('club/setClub', targetClubId.value)
     }
   }
+
   onMounted(async () => {
     await fetchData()
     Object.assign(newClub, {
@@ -184,9 +186,9 @@
                 <v-spacer />
                 <v-btn
                   color="primary"
+                  rounded="xl"
                   :size="xs ? 'default' : 'large'"
                   type="submit"
-                  rounded="xl"
                 >
                   Save
                 </v-btn>

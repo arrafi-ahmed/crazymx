@@ -43,6 +43,30 @@ function formatDateToMonDD(date) {
     return d.toLocaleDateString("en-US", options);
 }
 
+function formatEventDateTime(date, format = "MM/DD/YYYY HH:mm") {
+    if (!date) return '';
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+
+    // Parse format string and convert to JavaScript date formatting
+    const formatMap = {
+        'MM': String(d.getMonth() + 1).padStart(2, '0'),
+        'DD': String(d.getDate()).padStart(2, '0'),
+        'YYYY': d.getFullYear(),
+        'HH': String(d.getHours()).padStart(2, '0'),
+        'mm': String(d.getMinutes()).padStart(2, '0'),
+        'ss': String(d.getSeconds()).padStart(2, '0'),
+    };
+
+    let formatted = format;
+    Object.keys(formatMap).forEach(key => {
+        formatted = formatted.replace(new RegExp(key, 'g'), formatMap[key]);
+    });
+
+    return formatted;
+}
+
 const getApiPublicImgUrl = (imageName, type) =>
     `${API_BASE_URL}/${type}/${imageName}`;
 
@@ -201,6 +225,7 @@ module.exports = {
     ifAdmin,
     excludedSecurityURLs,
     formatDateToMonDD,
+    formatEventDateTime,
     generatePassword,
     isBcryptHash,
     defaultCurrency,

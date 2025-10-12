@@ -1,11 +1,10 @@
+import $axios from '@/plugins/axios'
 /**
  * plugins/index.js
  *
  * Automatically included in `./src/main.js`
  */
-
-import { handleRedirect, handleRemoveQueriesNRedirect } from '@/others/util'
-import $axios from '@/plugins/axios'
+import { handleRedirect, handleRemoveQueriesNRedirect } from '@/utils'
 import router from '../router'
 import store from '../store'
 // Plugins

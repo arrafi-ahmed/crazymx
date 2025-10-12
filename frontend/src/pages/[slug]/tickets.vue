@@ -4,7 +4,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
-  import { formatPrice } from '@/others/util'
+  import { formatPrice } from '@/utils'
 
   definePage({
     name: 'tickets-slug',
@@ -91,7 +91,10 @@
         // Enforce global per-registration limit
         const prospectiveTotal = totalSelectedTickets.value + quantityChange
         if (prospectiveTotal > maxTicketsPerRegistration.value) {
-          store.commit('addSnackbar', { text: `You can select up to ${maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value} tickets per registration`, color: 'error' })
+          store.commit('addSnackbar', {
+            text: `You can select up to ${maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value} tickets per registration`,
+            color: 'error',
+          })
           return
         }
         selectedTickets.value.push({
@@ -110,7 +113,10 @@
       if (quantityChange > 0) {
         const prospectiveTotal = totalSelectedTickets.value + quantityChange
         if (prospectiveTotal > maxTicketsPerRegistration.value) {
-          store.commit('addSnackbar', { text: `You can select up to ${maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value} tickets per registration`, color: 'error' })
+          store.commit('addSnackbar', {
+            text: `You can select up to ${maxTicketsPerRegistration.value === Infinity ? 0 : maxTicketsPerRegistration.value} tickets per registration`,
+            color: 'error',
+          })
           return
         }
       }
@@ -200,7 +206,10 @@
       try {
         registrationData = JSON.parse(storedData)
       } catch {
-        store.commit('addSnackbar', { text: 'Invalid registration data. Please complete the registration form again.', color: 'error' })
+        store.commit('addSnackbar', {
+          text: 'Invalid registration data. Please complete the registration form again.',
+          color: 'error',
+        })
         return
       }
 

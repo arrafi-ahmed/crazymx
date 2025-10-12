@@ -2,7 +2,7 @@
   import { onMounted, reactive, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
-  import { isValidEmail, isValidPass, showApiQueryMsg } from '@/others/util'
+  import { isValidEmail, isValidPass, showApiQueryMsg } from '@/utils'
 
   definePage({
     name: 'register',
@@ -36,6 +36,7 @@
       })
     })
   }
+
   onMounted(() => {
     showApiQueryMsg()
   })

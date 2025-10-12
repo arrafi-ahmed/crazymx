@@ -6,7 +6,7 @@
   import { useStore } from 'vuex'
   import NoItemsFound from '@/components/NoItemsFound.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { formatPrice } from '@/others/util'
+  import { formatDateTime, formatPrice } from '@/utils'
 
   definePage({
     name: 'event-sponsorships',
@@ -65,11 +65,6 @@
     } finally {
       isLoading.value = false
     }
-  }
-
-  function formatDateTime (dateString) {
-    if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleString()
   }
 
   function getTotalAmount () {
@@ -237,7 +232,7 @@
                 </template>
 
                 <template #item.createdAt="{ item }">
-                  {{ formatDateTime(item.createdAt) }}
+                  {{ formatDateTime({input: item.createdAt}) }}
                 </template>
 
                 <template #item.actions="{ item }">
@@ -348,7 +343,7 @@
             <v-list-item>
               <v-list-item-title>Created At</v-list-item-title>
               <v-list-item-subtitle>
-                {{ formatDateTime(selectedSponsorship.createdAt) }}
+                {{ formatDateTime({input: selectedSponsorship.createdAt}) }}
               </v-list-item-subtitle>
             </v-list-item>
 

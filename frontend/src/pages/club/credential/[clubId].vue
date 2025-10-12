@@ -5,7 +5,7 @@
   import { useStore } from 'vuex'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { generatePassword } from '@/others/util'
+  import { generatePassword } from '@/utils'
 
   definePage({
     name: 'credential-generate',
@@ -73,11 +73,13 @@
       Object.assign(user, { ...userInit })
     })
   }
+
   function deleteAppUser (id, type) {
     store.dispatch('appUser/deleteAppUser', id)
   }
 
   const showGeneratedPassword = ref(false)
+
   function handleGeneratePassword () {
     user.password = generatePassword()
     showGeneratedPassword.value = !showGeneratedPassword.value

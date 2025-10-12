@@ -3,8 +3,8 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
-  import { formatPrice, stripePublic } from '@/others/util'
   import $axios from '@/plugins/axios'
+  import { formatPrice, stripePublic } from '@/utils'
 
   definePage({
     name: 'checkout-slug',
@@ -118,7 +118,10 @@
       }
       // Validate attendee data
       if (!attendees.value || !Array.isArray(attendees.value) || attendees.value.length === 0) {
-        store.commit('addSnackbar', { text: 'No attendee data found. Please complete attendee forms first.', color: 'error' })
+        store.commit('addSnackbar', {
+          text: 'No attendee data found. Please complete attendee forms first.',
+          color: 'error',
+        })
         return
       }
 
@@ -181,7 +184,10 @@
 
       // Validate required data
       if (!attendees.value || !Array.isArray(attendees.value) || attendees.value.length === 0) {
-        store.commit('addSnackbar', { text: 'No attendee data found. Please complete attendee forms first.', color: 'error' })
+        store.commit('addSnackbar', {
+          text: 'No attendee data found. Please complete attendee forms first.',
+          color: 'error',
+        })
         return
       }
 
@@ -195,7 +201,10 @@
       }
 
       if (!registration.value) {
-        store.commit('addSnackbar', { text: 'No registration data found. Please complete the registration form first.', color: 'error' })
+        store.commit('addSnackbar', {
+          text: 'No registration data found. Please complete the registration form first.',
+          color: 'error',
+        })
         return
       }
 

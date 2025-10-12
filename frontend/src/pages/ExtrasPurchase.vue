@@ -7,7 +7,7 @@
   import { useStore } from 'vuex'
   import NoItemsFound from '@/components/NoItemsFound.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { stripePublic } from '@/others/util'
+  import { stripePublic } from '@/utils'
 
   definePage({
     name: 'extras-purchase',
@@ -112,7 +112,10 @@
         paymentClientSecret.value = result.payload.clientSecret
       } else {
         // Free extras or no Stripe needed
-        store.commit('addSnackbar', { text: 'Vouchers purchased successfully! You will receive a confirmation email shortly.', color: 'success' })
+        store.commit('addSnackbar', {
+          text: 'Vouchers purchased successfully! You will receive a confirmation email shortly.',
+          color: 'success',
+        })
 
         // Redirect to success page
         router.push({

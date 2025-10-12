@@ -4,7 +4,7 @@
   import { useDisplay } from 'vuetify'
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
-  import { isValidImage } from '@/others/util'
+  import { isValidImage } from '@/utils'
 
   definePage({
     name: 'club-add',

@@ -22,6 +22,7 @@ declare module 'vue' {
     ProgressLoader: typeof import('./src/components/ProgressLoader.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TimePicker: typeof import('./src/components/TimePicker.vue')['default']
     UserAvatar: typeof import('./src/components/UserAvatar.vue')['default']
   }
 }

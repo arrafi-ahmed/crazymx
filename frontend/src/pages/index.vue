@@ -2,7 +2,15 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
-  import { formatDate, getApiPublicImageUrl, getClientPublicImageUrl, getEventImageUrl } from '@/others/util'
+  import { formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
+
+  definePage({
+    name: 'homepage',
+    meta: {
+      layout: 'default',
+      title: 'Home',
+    },
+  })
 
   const router = useRouter()
   const store = useStore()
@@ -17,25 +25,15 @@
 
   // Format event data for display
   function formatEventData (events) {
+    if (!events || !Array.isArray(events)) {
+      return []
+    }
     return events
       .map(event => ({
         id: event.id,
         title: event.name,
-        date: (() => {
-          const isSingleDay = event?.config?.isSingleDayEvent === true
-          const hasRange = event?.startDate && event?.endDate
-          const sameDay = hasRange
-            ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
-            : true
-          if (isSingleDay || sameDay) return formatDate(event.startDate)
-          if (hasRange) return `${formatDate(event.startDate)} - ${formatDate(event.endDate)}`
-          return formatDate(event.startDate)
-        })(),
-        time: new Date(event.startDate).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-        }),
+        date: formatEventDateDisplay({ event, eventConfig: event.config }),
+        time: event.startTime || null, // Only show time if it's set in DB
         location: event.location,
         description: event.description === 'null' ? '' : event.description,
         banner: event.banner
@@ -43,10 +41,90 @@
           : getClientPublicImageUrl('default-event2.jpeg'),
         slug: event.slug,
         registrationCount: event.registrationCount,
-        startDate: event.startDate,
-        endDate: event.endDate,
+        startDate: event.startDatetime || event.start_datetime || event.startDate,
+        endDate: event.endDatetime || event.end_datetime || event.endDate,
+        eventStatus: getEventStatus(event),
       }))
-      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+      .sort((a, b) => {
+        // Sort chronologically by start datetime (earliest first)
+        const dateA = new Date(a.startDate)
+        const dateB = new Date(b.startDate)
+        return dateA - dateB
+      })
+  }
+
+  // Get event status based on date
+  function getEventStatus (event) {
+    if (!event.startDate) {
+      // Show event type or other useful info when date is not available
+      if (event.config?.isAllDay) {
+        return 'All Day Event'
+      } else if (event.config?.isSingleDayEvent) {
+        return 'Single Day'
+      } else {
+        return 'Multi Day Event'
+      }
+    }
+
+    const now = new Date()
+    const eventDate = new Date(event.startDate)
+    const diffTime = eventDate - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays < 0) {
+      return 'Past Event'
+    } else if (diffDays === 0) {
+      return 'Today'
+    } else if (diffDays === 1) {
+      return 'Tomorrow'
+    } else if (diffDays <= 7) {
+      return 'This Week'
+    } else if (diffDays <= 14) {
+      return 'Next Week'
+    } else if (diffDays <= 30) {
+      return 'This Month'
+    } else {
+      return 'Upcoming'
+    }
+  }
+
+  // Get CSS class for badge based on status
+  function getBadgeClass (status) {
+    switch (status) {
+      case 'Today': {
+        return 'badge-today'
+      }
+      case 'Tomorrow': {
+        return 'badge-tomorrow'
+      }
+      case 'This Week': {
+        return 'badge-this-week'
+      }
+      case 'Next Week': {
+        return 'badge-next-week'
+      }
+      case 'This Month': {
+        return 'badge-this-month'
+      }
+      case 'Upcoming': {
+        return 'badge-upcoming'
+      }
+      case 'Past Event': {
+        return 'badge-past'
+      }
+      case 'All Day Event': {
+        return 'badge-all-day'
+      }
+      case 'Single Day': {
+        return 'badge-single-day'
+      }
+      case 'Multi Day Event': {
+        return 'badge-multi-day'
+      }
+      default: {
+        return 'badge-default'
+      }
+    }
   }
 
   // Fetch events
@@ -56,7 +134,6 @@
 
       // Get club ID from current user or use default
       const clubId = currentUser.value?.clubId || 1
-
       // Fetch events from store
       await store.dispatch('event/setEvents', clubId)
 
@@ -70,7 +147,6 @@
   }
 
   function navigateToEvent (event) {
-    console.log(8,event)
     if (event.slug) {
       router.push({ name: 'event-landing-slug', params: { slug: event.slug } })
     } else {
@@ -132,7 +208,6 @@
         <!-- Events Grid -->
         <v-row
           v-else
-          class="events-grid"
           justify="center"
         >
           <v-col
@@ -140,9 +215,8 @@
             :key="event.id"
             class="event-col"
             cols="12"
-            lg="4"
-            md="6"
-            sm="10"
+            md="4"
+            sm="12"
           >
             <div
               class="event-card"
@@ -155,8 +229,9 @@
                 >
                 <div
                   class="event-badge"
+                  :class="getBadgeClass(event.eventStatus)"
                 >
-                  {{ event.registrationCount }} registered
+                  {{ event.eventStatus }}
                 </div>
               </div>
               <div class="event-content">
@@ -173,7 +248,10 @@
                     </v-icon>
                     <span>{{ event.date }}</span>
                   </div>
-                  <div class="event-time">
+                  <div
+                    v-if="event.time"
+                    class="event-time"
+                  >
                     <v-icon
                       color="primary"
                       size="16"
@@ -182,7 +260,10 @@
                     </v-icon>
                     <span>{{ event.time }}</span>
                   </div>
-                  <div class="event-location">
+                  <div
+                    v-if="event.location && event.location.trim()"
+                    class="event-location"
+                  >
                     <v-icon
                       color="primary"
                       size="16"
@@ -222,59 +303,6 @@
           </v-icon>
           <h3>No upcoming events</h3>
           <p>Check back soon for new events and concerts.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- About Section -->
-    <section class="about-section">
-      <div class="container">
-        <div class="about-content">
-          <div class="about-text">
-            <h2 class="about-title">
-              About Our Concerts
-            </h2>
-            <p class="about-description">
-              We host a diverse range of musical events that bring our community together. From
-              classical concerts to cultural celebrations, each event is designed to inspire, unite,
-              and transform our audience through the power of music.
-            </p>
-            <div class="about-features">
-              <div class="feature-item">
-                <v-icon
-                  color="primary"
-                  size="24"
-                >
-                  mdi-music
-                </v-icon>
-                <span>World-class performances</span>
-              </div>
-              <div class="feature-item">
-                <v-icon
-                  color="primary"
-                  size="24"
-                >
-                  mdi-heart
-                </v-icon>
-                <span>Community focused</span>
-              </div>
-              <div class="feature-item">
-                <v-icon
-                  color="primary"
-                  size="24"
-                >
-                  mdi-gift
-                </v-icon>
-                <span>Free admission</span>
-              </div>
-            </div>
-          </div>
-          <div class="about-image">
-            <img
-              alt="Cathedral Concert"
-              :src="getClientPublicImageUrl('default-event2.jpeg')"
-            >
-          </div>
         </div>
       </div>
     </section>
@@ -345,9 +373,8 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  background:
-    linear-gradient(135deg, rgba(212, 184, 150, 0.85) 0%, rgba(210, 180, 140, 0.75) 100%),
-    url('/img/hero.webp') center/cover;
+  background: linear-gradient(135deg, rgba(212, 184, 150, 0.85) 0%, rgba(210, 180, 140, 0.75) 100%),
+  url('/img/hero.webp') center/cover;
   color: #2c3e50;
 }
 
@@ -420,12 +447,6 @@
   margin: 0;
 }
 
-.events-grid {
-  gap: 32px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
 .event-card {
   background: white;
   border-radius: 16px;
@@ -471,6 +492,62 @@
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* Badge color variations */
+.badge-today {
+  background: #ff4444;
+  color: white;
+}
+
+.badge-tomorrow {
+  background: #ff8800;
+  color: white;
+}
+
+.badge-this-week {
+  background: #ffaa00;
+  color: white;
+}
+
+.badge-next-week {
+  background: #88cc00;
+  color: white;
+}
+
+.badge-this-month {
+  background: #00aa88;
+  color: white;
+}
+
+.badge-upcoming {
+  background: #0088cc;
+  color: white;
+}
+
+.badge-past {
+  background: #666666;
+  color: white;
+}
+
+.badge-all-day {
+  background: #9c27b0;
+  color: white;
+}
+
+.badge-single-day {
+  background: #673ab7;
+  color: white;
+}
+
+.badge-multi-day {
+  background: #3f51b5;
+  color: white;
+}
+
+.badge-default {
+  background: #fd5549;
+  color: white;
 }
 
 .event-content {

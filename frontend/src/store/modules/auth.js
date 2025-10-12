@@ -1,11 +1,11 @@
-import { ifAdmin, ifSudo } from '@/others/util'
 import $axios from '@/plugins/axios'
+import { ifAdmin, ifSudo } from '@/utils'
 
 export const namespaced = true
 
 export const state = {
   token: localStorage.getItem('token') || null,
-  currentUser: JSON.parse(localStorage.getItem('currentUser')) || {},
+  currentUser: JSON.parse(localStorage.getItem('currentUser') || '{}'),
 }
 
 export const mutations = {

@@ -53,7 +53,6 @@ pool.on("connect", (client) => {
     // Ensure all timestamps in this session use UTC
     client.query("SET TIME ZONE 'UTC'").catch(() => {
     });
-    console.log("Connected to PostgreSQL database");
 });
 
 pool.on("error", (err) => {

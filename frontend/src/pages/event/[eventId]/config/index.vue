@@ -30,6 +30,16 @@
 
   const config = reactive({ ...new EventConfig() })
 
+  const dateFormatOptions = [
+    { title: 'MM/DD/YYYY HH:mm (12/25/2024 14:30)', value: 'MM/DD/YYYY HH:mm' },
+    { title: 'MM/DD/YYYY (12/25/2024)', value: 'MM/DD/YYYY' },
+    { title: 'DD/MM/YYYY (25/12/2024)', value: 'DD/MM/YYYY' },
+    { title: 'YYYY-MM-DD (2024-12-25)', value: 'YYYY-MM-DD' },
+    { title: 'MMM DD, YYYY (Dec 25, 2024)', value: 'MMM DD, YYYY' },
+    { title: 'MMMM DD, YYYY (December 25, 2024)', value: 'MMMM DD, YYYY' },
+    { title: 'DD MMM YYYY (25 Dec 2024)', value: 'DD MMM YYYY' },
+  ]
+
   const form = ref(null)
   const isFormValid = ref(true)
   const isLoading = ref(true)
@@ -42,7 +52,8 @@
     isSaving.value = true
 
     try {
-      await store.dispatch('event/saveConfig', { config, eventId: event.value.id })
+      // Save config including all fields
+      await store.dispatch('event/saveConfig', { config: config, eventId: event.value.id })
 
       // Show success message or redirect
       router.push({
@@ -143,15 +154,15 @@
               fast-fail
               @submit.prevent="handleSubmitConfig"
             >
-              <v-text-field
+              <v-number-input
                 v-model.number="config.maxTicketsPerRegistration"
-                class="mb-4"
-                density="comfortable"
-                hide-details="auto"
+                control-variant="default"
+                :hide-input="false"
+                inset
                 label="Max Ticket Purchase Per Registration"
                 prepend-inner-icon="mdi-ticket"
+                :reverse="false"
                 :rules="[(v) => v > 0 || 'Must be greater than 0']"
-                type="number"
                 variant="solo"
               />
 
@@ -167,14 +178,36 @@
               />
 
               <v-switch
+                v-model="config.isAllDay"
+                class="mb-4"
+                color="primary"
+                glow
+                hint="Enable if this event lasts the entire day (no specific start or end time)."
+                inset
+                label="All Day Event"
+                persistent-hint
+              />
+
+              <v-switch
                 v-model="config.isSingleDayEvent"
                 class="mb-4"
                 color="primary"
                 glow
-                hint="Toggle this if your event spans multiple days (date range) instead of a single day."
+                hint="Turn off if this event continues for multiple days."
                 inset
                 label="Single Day Event"
                 persistent-hint
+              />
+
+              <v-select
+                v-model="config.dateFormat"
+                class="mb-4"
+                hint="Choose how dates will be displayed on customer-facing pages"
+                :items="dateFormatOptions"
+                label="Date Format"
+                persistent-hint
+                prepend-inner-icon="mdi-calendar"
+                variant="solo"
               />
 
               <div class="d-flex align-center mt-3 mt-md-4">

@@ -3,7 +3,7 @@
   import { useRoute } from 'vue-router'
   import { useStore } from 'vuex'
   import ProgressLoader from '@/components/ProgressLoader.vue'
-  import { appInfo } from '@/others/util'
+  import { appInfo } from '@/utils'
 
   const route = useRoute()
   const store = useStore()
@@ -37,6 +37,6 @@
     135deg,
     rgb(var(--v-theme-primary)) 0%,
     rgb(var(--v-theme-accent)) 100%
-  )!important;
+  ) !important;
 }
 </style>

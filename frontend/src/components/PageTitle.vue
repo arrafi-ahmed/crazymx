@@ -1,7 +1,5 @@
 <script setup>
-  import { computed } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import { useDisplay } from 'vuetify'
 
   // Props
   const props = defineProps({

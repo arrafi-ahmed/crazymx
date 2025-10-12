@@ -1,6 +1,6 @@
 <script setup>
   import { useDisplay } from 'vuetify'
-  import { appInfo } from '@/others/util'
+  import { appInfo } from '@/utils'
 
   const { xs } = useDisplay()
   const { imgSrc, title, imgClass, containerClass, maxWidth, width } = defineProps([
@@ -11,10 +11,19 @@
     'maxWidth',
     'width',
   ])
+
+  const emit = defineEmits(['click'])
+
+  function handleClick () {
+    emit('click')
+  }
 </script>
 
 <template>
-  <div :class="`d-flex align-center ${containerClass}`">
+  <div
+    :class="`d-flex align-center ${containerClass}`"
+    @click="handleClick"
+  >
     <v-img
       v-if="imgSrc"
       :class="` ${imgClass}`"

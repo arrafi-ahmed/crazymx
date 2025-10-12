@@ -23,6 +23,7 @@
   function formatInputItemTitle ({ flag, code, name, dialCode }) {
     return (flag ? flag : code) + ' ' + name + ' ' + dialCode
   }
+
   const code = ref(null)
   const phone = ref(null)
 
@@ -41,6 +42,7 @@
       dialCode,
     })
   }
+
   // set initial selection to uk
   onMounted(() => {
     const ukOption = inputItem.options.find(option => option.code === 'IT')

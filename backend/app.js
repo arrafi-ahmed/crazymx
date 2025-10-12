@@ -34,6 +34,7 @@ app.use(customCors);
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Apply suppress toast middleware globally
 app.use(suppressToastMiddleware);

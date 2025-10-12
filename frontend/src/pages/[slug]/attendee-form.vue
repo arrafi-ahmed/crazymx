@@ -4,7 +4,6 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
   import { Attendee } from '@/models/index.js'
-  import $axios from '@/plugins/axios'
 
   definePage({
     name: 'attendee-form-slug',
@@ -189,8 +188,8 @@
 
     // Fetch event config by slug to determine saveAllAttendeesDetails
     try {
-      await store.dispatch('event/setEventBySlug', {slug: route.params.slug})
-      // await $axios.get(`/event/getEventBySlug`, { params: { slug: route.params.slug } })
+      await store.dispatch('event/setEventBySlug', { slug: route.params.slug })
+    // await $axios.get(`/event/getEventBySlug`, { params: { slug: route.params.slug } })
     } catch {
       // Keep default behavior (multi-attendee) if config fails to load
       eventConfig.value = eventConfig.value || {}
@@ -202,7 +201,6 @@
   // Initialize when component mounts
   onMounted(async () => {
     await fetchData()
-    console.log(8, saveAllAttendeesDetails.value)
   })
 
   // Also react when the user navigates between attendees

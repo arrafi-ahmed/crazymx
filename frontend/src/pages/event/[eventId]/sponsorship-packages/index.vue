@@ -6,7 +6,7 @@
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import NoItemsFound from '@/components/NoItemsFound.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { formatPrice } from '@/others/util'
+  import { formatPrice } from '@/utils'
 
   definePage({
     name: 'event-sponsorship-packages',

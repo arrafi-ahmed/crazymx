@@ -1,5 +1,5 @@
 <script setup>
-  import { appInfo } from '@/others/util.js'
+  import { appInfo } from '@/utils'
 </script>
 <template>
   <v-footer class="flex-grow-0 footer bg-gradient">

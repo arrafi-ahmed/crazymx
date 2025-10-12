@@ -6,7 +6,7 @@
   import { useStore } from 'vuex'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
-  import { getClubImageUrl } from '@/others/util'
+  import { getClubImageUrl } from '@/utils'
 
   definePage({
     name: 'dashboard-sudo',
@@ -37,12 +37,15 @@
       },
     })
   }
+
   function deleteClub (clubId) {
     store.dispatch('club/removeClub', { clubId })
   }
+
   function fetchData () {
     store.dispatch('club/setClubs')
   }
+
   onMounted(() => {
     fetchData()
   })

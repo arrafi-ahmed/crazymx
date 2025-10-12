@@ -6,7 +6,7 @@
   import { useTheme } from 'vuetify'
   import { useStore } from 'vuex'
   import PageTitle from '@/components/PageTitle.vue'
-  import { generateQrData } from '@/others/util.js'
+  import { generateQrData } from '@/utils'
 
   definePage({
     name: 'qr-viewer',
