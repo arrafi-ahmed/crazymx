@@ -3,6 +3,7 @@
 
   import { useRoute, useRouter } from 'vue-router'
   import { useStore } from 'vuex'
+  import { useDisplay } from 'vuetify'
   import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
   import PageTitle from '@/components/PageTitle.vue'
   import { formatEventDateDisplay, getEventImageUrl } from '@/utils'

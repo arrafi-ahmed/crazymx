@@ -2,7 +2,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
-  import { useDisplay } from 'vuetify'
+  
   import { formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
 
   definePage({
