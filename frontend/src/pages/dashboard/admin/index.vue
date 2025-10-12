@@ -17,7 +17,7 @@
     },
   })
 
-  const {xs} = useDisplay)
+  const {xs} = useDisplay()
   const store = useStore()
   const route = useRoute()
   const router = useRouter()
