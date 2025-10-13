@@ -240,28 +240,6 @@
               />
 
               <v-date-input
-                v-model="newEvent.dateRange"
-                class="mb-4"
-                color="primary"
-                hide-details="auto"
-                label="Event Date"
-                multiple="range"
-                prepend-icon=""
-                prepend-inner-icon="mdi-calendar"
-                :rules="[
-                  (v) => !!v || 'Date range is required!',
-                  (v) =>
-                    (v && Array.isArray(v) && v.length >= 2) ||
-                    'Please select both start and end dates',
-                  (v) =>
-                    (v && Array.isArray(v) && v.length >= 2 && v[0] <= v[v.length - 1]) ||
-                    'Start date must be before end date',
-                ]"
-                show-adjacent-months
-                variant="solo"
-              />
-
-              <v-date-input
                 v-if="newEvent.config.isSingleDayEvent"
                 v-model="newEvent.dateRange[0]"
                 class="mb-4"
@@ -473,6 +451,7 @@
             color="secondary"
             rounded="xl"
             variant="outlined"
+            size="large"
             @click="configDialog = false"
           >
             Cancel
@@ -481,6 +460,7 @@
             color="primary"
             rounded="xl"
             variant="flat"
+            size="large"
             @click="saveConfig"
           >
             Save
