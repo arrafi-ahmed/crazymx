@@ -2,11 +2,24 @@ const handlebars = require("handlebars");
 const fs = require("fs");
 const path = require("path");
 const {generateQrCode, appInfo, generateQrData} = require("../others/util");
-const {formatTime, formatDateToMonDD, formatEventDateTime} = require("../others/util");
+const {formatTime} = require("../others/util");
+const {
+    formatInTimezone,
+    formatLongDate,
+    formatEventDateTimeRange,
+    getTimezoneAbbreviation,
+} = require("../others/dateUtils");
+const {
+    isGroupTicket,
+    getQrMessage,
+    getEmailSubject,
+    isRegistrantDetails,
+} = require("../utils/ticketUtils");
 const {createTransport} = require("nodemailer");
 const registrationService = require("./registration");
 const CustomError = require("../model/CustomError");
 const attendeesService = require("./attendees");
+const {query} = require("../db");
 
 const {SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, VUE_BASE_URL} =
     process.env;
@@ -73,6 +86,21 @@ const emailTemplatePath = path.join(
     "eventTicketEmail.html",
 );
 const emailTemplateSource = fs.readFileSync(emailTemplatePath, "utf8");
+
+// Register Handlebars helper for currency formatting
+handlebars.registerHelper('formatCurrency', function(amount, currency) {
+    const currencySymbols = {
+        'USD': '$',
+        'GBP': '£',
+        'EUR': '€',
+        'JPY': '¥',
+        'INR': '₹',
+    };
+    const symbol = currencySymbols[currency] || currency;
+    const value = (amount / 100).toFixed(2);
+    return `${symbol}${value}`;
+});
+
 const compileTicketTemplate = handlebars.compile(emailTemplateSource);
 
 exports.sendTicketByAttendeeId = async ({attendeeId}) => {
@@ -89,76 +117,96 @@ exports.sendTicketByAttendeeId = async ({attendeeId}) => {
             registrationId: attendee.registrationId,
         });
 
-    const attachments = [];
+    // Get user timezone from registration dedicated columns
+    const userTimezone = registration.userTimezone || 'UTC';
+    const timezoneAbbr = getTimezoneAbbreviation(userTimezone);
 
-    // Generate QR code for this specific attendee
+    // Get order details and total quantity
+    const orderSql = `
+        SELECT o.total_amount,
+               COALESCE(SUM((item->>'quantity')::int), 0) AS total_tickets,
+               jsonb_agg(
+                   jsonb_build_object(
+                       'ticketTitle', COALESCE(item->>'title', 'Ticket'),
+                       'quantity', COALESCE((item->>'quantity')::int, 0),
+                       'unitPrice', COALESCE((item->>'unitPrice')::int, 0)
+                   )
+               ) AS items_detail
+        FROM orders o, jsonb_array_elements(o.items) AS item
+        WHERE o.registration_id = $1
+        GROUP BY o.total_amount
+    `;
+    const orderResult = await query(orderSql, [registration.id]);
+    const totalTickets = orderResult.rows[0]?.totalTickets || 1;
+    const orderItems = orderResult.rows[0]?.itemsDetail || [];
+    const hasMultipleTicketTypes = orderItems.length > 1;
+    
+    // Calculate payment summary
+    const subtotal = orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const totalAmount = orderResult.rows[0]?.totalAmount || subtotal;
+    // No tax on free orders
+    const taxAmount = subtotal === 0 ? 0 : totalAmount - subtotal;
+
+    // Determine if group ticket using utility
+    const isGroup = isGroupTicket({
+        saveAllAttendeesDetails: event?.config?.saveAllAttendeesDetails,
+        totalQuantity: totalTickets
+    });
+
+    // Generate QR code
+    const attachments = [];
     const qrCodeMain = await generateQrData({
         registrationId: attendee.registrationId,
         attendeeId: attendee.id,
         qrUuid: attendee.qrUuid,
     });
-    attachments.push({
-        type: "qrcode",
-        content: qrCodeMain,
-        cid: "qrCodeMain",
-    });
+    attachments.push({type: "qrcode", content: qrCodeMain, cid: "qrCodeMain"});
 
-    // Add extras QR code if this is the primary attendee and extras exist
-    let qrCodeExtras = null;
-    if (
-        attendee.isPrimary &&
-        extrasPurchase?.id &&
-        extrasPurchase.extrasData?.length
-    ) {
-        qrCodeExtras = await generateQrCode({
-            id: extrasPurchase.id,
-            qrUuid: extrasPurchase.qrUuid,
-        });
-        attachments.push({
-            type: "qrcode",
-            content: qrCodeExtras,
-            cid: "qrCodeExtras",
-        });
+    // Add extras QR if primary attendee
+    if (attendee.isPrimary && extrasPurchase?.id && extrasPurchase.extrasData?.length) {
+        const qrCodeExtras = await generateQrCode({id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid});
+        attachments.push({type: "qrcode", content: qrCodeExtras, cid: "qrCodeExtras"});
     }
 
-    const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
-    const isAllDay = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
-    const dateFormat = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
-    const sameDay = event?.startDate && event?.endDate
-        ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
-        : false;
+    // Format dates
+    const eventDateDisplay = formatEventDateTimeRange(
+        event.startDate,
+        event.endDate,
+        userTimezone,
+        event.config || {}
+    );
+    const registrationTime = formatLongDate(registration.createdAt, userTimezone);
 
-    const eventDateDisplay = (() => {
-        if (!event?.startDate && !event?.endDate) return 'Date TBA';
-
-        // For all-day events, remove time from format
-        const formatToUse = isAllDay ? dateFormat.replace(/ HH:mm|HH:mm/g, '') : dateFormat;
-
-        if ((isSingleDay || sameDay) && event?.startDate) {
-            return formatEventDateTime(event.startDate, formatToUse);
-        }
-        if (event?.startDate && event?.endDate) {
-            return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
-        }
-        return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
-    })();
-
+    // Build email template data
     const html = compileTicketTemplate({
         eventName: event.name,
         name: `${attendee.firstName} ${attendee.lastName}`,
         email: attendee.email,
         phone: attendee.phone || "",
         location: event.location,
-        registrationTime: formatTime(registration.createdAt),
+        registrationTime,
         eventDateDisplay,
+        ticketType: hasMultipleTicketTypes ? null : (attendee.ticketTitle || orderItems[0]?.ticketTitle),
+        quantity: hasMultipleTicketTypes ? null : (isGroup ? totalTickets : 1),
+        isGroupTicket: isGroup,
+        isRegistrantDetails: isRegistrantDetails(isGroup),
+        hasMultipleTicketTypes,
+        showTicketsSection: isGroup && hasMultipleTicketTypes, // Only show for group tickets with multiple types
+        groupMessage: getQrMessage(isGroup),
+        orderItems,
+        currency: event.currency || 'USD',
+        subtotal,
+        taxAmount,
+        totalAmount,
         extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
         appName: appInfo.name,
+        userTimezone,
+        timezoneAbbr,
     });
 
-    // Send email only to this specific attendee
     return exports.sendMail({
         to: attendee.email,
-        subject: `🎟️ Ticket for ${event.name} - ${attendee.firstName} ${attendee.lastName}`,
+        subject: getEmailSubject(isGroup, event.name),
         html,
         attachments,
     });
@@ -170,6 +218,10 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
         registrationId,
     });
 
+    // Get user timezone from registration
+    const userTimezone = registration.userTimezone || 'UTC';
+    const timezoneAbbr = getTimezoneAbbreviation(userTimezone);
+
     // Get all attendees for this registration
     const attendees = await attendeesService.getAttendeesByRegistrationId({
         registrationId: registration.id,
@@ -179,30 +231,55 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
         throw new CustomError("No attendees found for this registration", 404);
     }
 
-    const results = [];
+    // Get order details and total quantity from orders table
+    const orderSql = `
+        SELECT o.total_amount,
+               COALESCE(SUM((item->>'quantity')::int), 0) AS total_tickets,
+               jsonb_agg(
+                   jsonb_build_object(
+                       'ticketTitle', COALESCE(item->>'title', 'Ticket'),
+                       'quantity', COALESCE((item->>'quantity')::int, 0),
+                       'unitPrice', COALESCE((item->>'unitPrice')::int, 0)
+                   )
+               ) AS items_detail
+        FROM orders o, jsonb_array_elements(o.items) AS item
+        WHERE o.registration_id = $1
+        GROUP BY o.total_amount
+    `;
+    const orderResult = await query(orderSql, [registration.id]);
+    const totalTickets = orderResult.rows[0]?.totalTickets || 1;
+    const orderItems = orderResult.rows[0]?.itemsDetail || [];
+    const hasMultipleTicketTypes = orderItems.length > 1;
+    
+    // Calculate payment summary
+    const subtotal = orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    const totalAmount = orderResult.rows[0]?.totalAmount || subtotal;
+    // No tax on free orders
+    const taxAmount = subtotal === 0 ? 0 : totalAmount - subtotal;
 
-    // If saving only primary attendee details, send a single email to primary including total attendees
-    const saveAll = event?.config?.saveAllAttendeesDetails === true || event?.config?.saveAllAttendeesDetails === 'true';
-    if (!saveAll) {
+    // Determine if group ticket using utility
+    const isGroup = isGroupTicket({
+        saveAllAttendeesDetails: event?.config?.saveAllAttendeesDetails,
+        totalQuantity: totalTickets
+    });
+
+    // Format dates
+    const eventDateDisplay = formatEventDateTimeRange(
+        event.startDate,
+        event.endDate,
+        userTimezone,
+        event.config || {}
+    );
+    const registrationTime = formatLongDate(registration.createdAt, userTimezone);
+
+    // If group ticket, send single email to primary
+    if (isGroup) {
         const primary = attendees.find(a => a.isPrimary) || attendees[0];
         if (!primary) {
             throw new CustomError("Primary attendee not found", 404);
         }
 
-        // compute totalAttendees from orders
-        const totalAttendees = await (() => (async () => {
-            const {query} = require('../db');
-            const sql = `
-                SELECT COALESCE(SUM((item->>'quantity')::int), 0) AS total_attendees
-                FROM orders o
-                         CROSS JOIN LATERAL jsonb_array_elements(o.items) AS item
-                WHERE o.registration_id = $1
-            `;
-            const r = await query(sql, [registration.id]);
-            return r.rows?.[0]?.total_attendees || 0;
-        })())();
-
-        // Generate QR code for the primary attendee only
+        // Generate QR code
         const attachments = [];
         const qrCodeMain = await generateQrData({
             registrationId: primary.registrationId,
@@ -211,33 +288,11 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
         });
         attachments.push({type: 'qrcode', content: qrCodeMain, cid: 'qrCodeMain'});
 
-        // Extras QR if applicable
+        // Add extras QR if applicable
         if (extrasPurchase?.id && extrasPurchase.extrasData?.length) {
             const qrCodeExtras = await generateQrCode({id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid});
             attachments.push({type: 'qrcode', content: qrCodeExtras, cid: 'qrCodeExtras'});
         }
-
-        const isSingleDay = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
-        const isAllDay = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
-        const dateFormat = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
-        const sameDay = event?.startDate && event?.endDate
-            ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
-            : false;
-
-        const eventDateDisplay = (() => {
-            if (!event?.startDate && !event?.endDate) return 'Date TBA';
-
-            // For all-day events, remove time from format
-            const formatToUse = isAllDay ? dateFormat.replace(/ HH:mm|HH:mm/g, '') : dateFormat;
-
-            if ((isSingleDay || sameDay) && event?.startDate) {
-                return formatEventDateTime(event.startDate, formatToUse);
-            }
-            if (event?.startDate && event?.endDate) {
-                return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
-            }
-            return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
-        })();
 
         const html = compileTicketTemplate({
             eventName: event.name,
@@ -245,101 +300,94 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
             email: primary.email,
             phone: primary.phone || "",
             location: event.location,
-            registrationTime: formatTime(registration.createdAt),
+            registrationTime,
             eventDateDisplay,
+            ticketType: hasMultipleTicketTypes ? null : (primary.ticketTitle || orderItems[0]?.ticketTitle),
+            quantity: hasMultipleTicketTypes ? null : totalTickets,
+            isGroupTicket: isGroup,
+            isRegistrantDetails: isRegistrantDetails(isGroup),
+            hasMultipleTicketTypes,
+            showTicketsSection: isGroup && hasMultipleTicketTypes, // Only show for group tickets with multiple types
+            groupMessage: getQrMessage(isGroup),
+            orderItems,
+            currency: event.currency || 'USD',
+            subtotal,
+            taxAmount,
+            totalAmount,
             extrasList: extrasPurchase?.extrasData || [],
             appName: appInfo.name,
+            userTimezone,
+            timezoneAbbr,
         });
 
         const sent = await exports.sendMail({
             to: primary.email,
-            subject: `🎟️ Tickets for ${event.name}`,
+            subject: getEmailSubject(isGroup, event.name),
             html,
             attachments,
         });
 
         return {
             registrationId,
-            totalAttendees,
+            totalAttendees: totalTickets,
             successfulEmails: 1,
             failedEmails: 0,
             results: [{attendeeId: primary.id, email: primary.email, messageId: sent.messageId, success: true}],
         };
     }
 
-    // Send email to each attendee
+    // Send individual emails to each attendee
+    const results = [];
     for (const attendee of attendees) {
         try {
+            // Generate QR code
             const attachments = [];
-
-            // Generate QR code for this specific attendee
             const qrCodeMain = await generateQrData({
                 registrationId: attendee.registrationId,
                 attendeeId: attendee.id,
                 qrUuid: attendee.qrUuid,
             });
-            attachments.push({
-                type: "qrcode",
-                content: qrCodeMain,
-                cid: "qrCodeMain",
-            });
+            attachments.push({type: "qrcode", content: qrCodeMain, cid: "qrCodeMain"});
 
-            // Add extras QR code if this is the primary attendee and extras exist
-            let qrCodeExtras = null;
-            if (
-                attendee.isPrimary &&
-                extrasPurchase?.id &&
-                extrasPurchase.extrasData?.length
-            ) {
-                qrCodeExtras = await generateQrCode({
-                    id: extrasPurchase.id,
-                    qrUuid: extrasPurchase.qrUuid,
-                });
-                attachments.push({
-                    type: "qrcode",
-                    content: qrCodeExtras,
-                    cid: "qrCodeExtras",
-                });
+            // Add extras QR if primary attendee
+            if (attendee.isPrimary && extrasPurchase?.id && extrasPurchase.extrasData?.length) {
+                const qrCodeExtras = await generateQrCode({id: extrasPurchase.id, qrUuid: extrasPurchase.qrUuid});
+                attachments.push({type: "qrcode", content: qrCodeExtras, cid: "qrCodeExtras"});
             }
 
-            const isSingleDayEach = event?.config?.isSingleDayEvent === true || event?.config?.isSingleDayEvent === 'true';
-            const isAllDayEach = event?.config?.isAllDay === true || event?.config?.isAllDay === 'true';
-            const dateFormatEach = event?.config?.dateFormat || "MM/DD/YYYY HH:mm";
-            const sameDayEach = event?.startDate && event?.endDate
-                ? new Date(event.startDate).toDateString() === new Date(event.endDate).toDateString()
-                : false;
-
-            const eventDateDisplayEach = (() => {
-                if (!event?.startDate && !event?.endDate) return 'Date TBA';
-
-                // For all-day events, remove time from format
-                const formatToUse = isAllDayEach ? dateFormatEach.replace(/ HH:mm|HH:mm/g, '') : dateFormatEach;
-
-                if ((isSingleDayEach || sameDayEach) && event?.startDate) {
-                    return formatEventDateTime(event.startDate, formatToUse);
-                }
-                if (event?.startDate && event?.endDate) {
-                    return `${formatEventDateTime(event.startDate, formatToUse)} – ${formatEventDateTime(event.endDate, formatToUse)}`;
-                }
-                return event?.startDate ? formatEventDateTime(event.startDate, formatToUse) : formatEventDateTime(event.endDate, formatToUse);
-            })();
-
+            // Find the attendee's specific ticket price
+            const attendeeTicket = orderItems.find(item => item.ticketTitle === attendee.ticketTitle) || orderItems[0];
+            const attendeeTicketPrice = attendeeTicket?.unitPrice || 0;
+            
             const html = compileTicketTemplate({
                 eventName: event.name,
                 name: `${attendee.firstName} ${attendee.lastName}`,
                 email: attendee.email,
                 phone: attendee.phone || "",
                 location: event.location,
-                registrationTime: formatTime(registration.createdAt),
-                eventDateDisplay: eventDateDisplayEach,
+                registrationTime,
+                eventDateDisplay,
+                ticketType: attendee.ticketTitle || attendeeTicket?.ticketTitle,
+                quantity: 1,
+                isGroupTicket: false,
+                isRegistrantDetails: isRegistrantDetails(false),
+                hasMultipleTicketTypes,
+                showTicketsSection: false, // Never show tickets section for individual attendee emails
+                groupMessage: getQrMessage(false),
+                orderItems,
+                currency: event.currency || 'USD',
+                subtotal: attendeeTicketPrice,
+                taxAmount: 0,
+                totalAmount: attendeeTicketPrice,
                 extrasList: attendee.isPrimary ? extrasPurchase?.extrasData || [] : [],
                 appName: appInfo.name,
+                userTimezone,
+                timezoneAbbr,
             });
 
-            // Send email to this specific attendee
             const result = await exports.sendMail({
                 to: attendee.email,
-                subject: `🎟️ Ticket for ${event.name} - ${attendee.firstName} ${attendee.lastName}`,
+                subject: getEmailSubject(false, event.name),
                 html,
                 attachments,
             });

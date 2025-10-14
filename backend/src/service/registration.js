@@ -276,18 +276,26 @@ exports.defaultSave = async ({payload}) => {
         }));
     }
 
-    const result = await exports.save({payload});
+    const result = await exports.save({
+        eventId: payload.eventId,
+        additionalFields: payload.additionalFields,
+        status: payload.status,
+        userTimezone: payload.userTimezone,
+        timezoneOffset: payload.timezoneOffset,
+    });
 
     return result;
 };
 
-exports.save = async ({eventId, additionalFields, status = false}) => {
+exports.save = async ({eventId, additionalFields, status = false, userTimezone, timezoneOffset}) => {
     const sql = `
-        INSERT INTO registration (event_id, additional_fields, status)
-        VALUES ($1, $2, $3) RETURNING *;`;
+        INSERT INTO registration (event_id, additional_fields, user_timezone, timezone_offset, status)
+        VALUES ($1, $2, $3, $4, $5) RETURNING *;`;
     const result = await query(sql, [
         eventId,
         JSON.stringify(additionalFields || {}),
+        userTimezone || 'UTC',
+        timezoneOffset || 0,
         status,
     ]);
     return result.rows[0];
@@ -433,6 +441,8 @@ exports.getRegistrationWEventWExtrasPurchase = async ({registrationId}) => {
                        'id', r.id,
                        'eventId', r.event_id,
                        'additionalFields', r.additional_fields,
+                       'userTimezone', r.user_timezone,
+                       'timezoneOffset', r.timezone_offset,
                        'status', r.status,
                        'createdAt', r.created_at,
                        'updatedAt', r.updated_at,
@@ -462,7 +472,9 @@ exports.getRegistrationWEventWExtrasPurchase = async ({registrationId}) => {
                        'name', e.name,
                        'startDate', e.start_datetime,
                        'endDate', e.end_datetime,
-                       'location', e.location
+                       'location', e.location,
+                       'currency', e.currency,
+                       'config', e.config
                )                 AS event,
                COALESCE(jsonb_build_object(
                                 'id', ep.id,
@@ -807,6 +819,8 @@ exports.completeFreeRegistration = async ({payload}) => {
             eventId,
             status: true, // Free registrations are immediately active
             additionalFields: registration?.additionalFields || {},
+            userTimezone: registration?.userTimezone,
+            timezoneOffset: registration?.timezoneOffset,
         });
 
         // 2. Create attendees
@@ -857,24 +871,22 @@ exports.completeFreeRegistration = async ({payload}) => {
             eventId: eventId,
         });
 
-        // 6. Send confirmation emails to all attendees (async, don't wait)
-        savedAttendees.forEach(async (attendee) => {
-            try {
-                // Fire and forget - don't await
-                emailService
-                    .sendTicketsByRegistrationId({
-                        registrationId: savedRegistration.id,
-                        attendeeId: attendee.id,
-                    })
-                    .catch((error) => {
-                        console.error(`Failed to send email to ${attendee.email}:`, error);
-                        // Don't fail the registration if email fails
-                    });
-            } catch (error) {
-                console.error(`Failed to queue email for ${attendee.email}:`, error);
-                // Don't fail the registration if email fails
-            }
-        });
+        // 6. Send confirmation emails (async, don't wait)
+        // sendTicketsByRegistrationId handles all attendees based on event config
+        // Only call it ONCE per registration, not once per attendee
+        try {
+            emailService
+                .sendTicketsByRegistrationId({
+                    registrationId: savedRegistration.id,
+                })
+                .catch((error) => {
+                    console.error(`Failed to send confirmation emails:`, error);
+                    // Don't fail the registration if email fails
+                });
+        } catch (error) {
+            console.error(`Failed to queue confirmation emails:`, error);
+            // Don't fail the registration if email fails
+        }
 
         return {
             registrationId: savedRegistration.id,
@@ -916,6 +928,12 @@ exports.getFreeRegistrationConfirmation = async ({registrationId}) => {
             throw new CustomError("Order not found for this registration", 404);
         }
 
+        // 3. Get event data to include config
+        const event = await eventService.getEventById({eventId: registration.eventId});
+        if (!event) {
+            throw new CustomError("Event not found", 404);
+        }
+
         // 4. Get ticket details for attendees
         const attendeesWithTickets = await Promise.all(
             registration.attendees.map(async (attendee) => {
@@ -942,6 +960,11 @@ exports.getFreeRegistrationConfirmation = async ({registrationId}) => {
                 additionalFields: registration.additionalFields,
                 createdAt: registration.createdAt,
                 updatedAt: registration.updatedAt,
+            },
+            event: {
+                id: event.id,
+                name: event.name,
+                config: event.config,
             },
             attendees: attendeesWithTickets,
             order: {

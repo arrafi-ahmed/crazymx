@@ -54,12 +54,30 @@
   })
 
   const taxConfig = computed(() => {
+    // Check direct event properties (tax_amount, tax_type) from database
+    const taxAmount = fetchedEvent.value?.taxAmount || fetchedEvent.value?.tax_amount
+    const taxType = fetchedEvent.value?.taxType || fetchedEvent.value?.tax_type
+    
+    if (taxAmount && taxType) {
+      return { 
+        type: taxType.toLowerCase(), 
+        amount: Number(taxAmount) 
+      }
+    }
+    
+    // Fallback to landingConfig.tax if available (for backward compatibility)
     const cfg = fetchedEvent.value?.landingConfig?.tax || fetchedEvent.value?.landing_config?.tax
-    if (!cfg || typeof cfg !== 'object') return { type: 'percent', amount: 0 }
-    return { type: (cfg.type || 'percent').toLowerCase(), amount: Number(cfg.amount || 0) }
+    if (cfg && typeof cfg === 'object') {
+      return { type: (cfg.type || 'percent').toLowerCase(), amount: Number(cfg.amount || 0) }
+    }
+    
+    return { type: 'percent', amount: 0 }
   })
 
   const taxAmount = computed(() => {
+    // No tax on free orders
+    if (subtotalAmount.value === 0) return 0
+    
     const { type, amount } = taxConfig.value
     if (!amount || amount <= 0) return 0
     if (type === 'percent') {
@@ -215,11 +233,19 @@
         return
       }
 
-      // Prepare registration data
+      // Capture timezone BEFORE sending
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const timezoneOffset = new Date().getTimezoneOffset()
+      
+      // Prepare registration data with timezone
       const registrationData = {
         attendees: attendees.value,
         selectedTickets: selectedTickets.value,
-        registration: registration.value,
+        registration: {
+          ...registration.value,
+          userTimezone,
+          timezoneOffset
+        },
         eventId: event.id,
       }
 

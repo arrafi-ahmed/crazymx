@@ -63,8 +63,16 @@
     isProcessingPayment.value = true
 
     try {
+      // Capture user timezone - store in dedicated fields
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      const timezoneOffset = new Date().getTimezoneOffset()
+      
+      registration.userTimezone = userTimezone
+      registration.timezoneOffset = timezoneOffset
+      
       // Ensure we have event and club data, use defaults if not available
       registration.eventId = event.value?.id || 1
+      
       localStorage.setItem('registrationData', JSON.stringify(registration))
       localStorage.setItem('attendeesData', JSON.stringify([attendee]))
 

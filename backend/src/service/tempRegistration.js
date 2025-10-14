@@ -112,6 +112,12 @@ exports.getTempRegistrationWAttendees = async (sessionId) => {
 
         const queryText = `
             SELECT tr.*,
+                   jsonb_build_object(
+                       'id', e.id,
+                       'name', e.name,
+                       'currency', e.currency,
+                       'config', e.config
+                   ) AS event,
                    COALESCE(
                            jsonb_agg(
                                    jsonb_build_object(
@@ -130,10 +136,11 @@ exports.getTempRegistrationWAttendees = async (sessionId) => {
                            ) FILTER(WHERE a.id IS NOT NULL), '[]' ::jsonb
                    ) AS attendees
             FROM temp_registration tr
+                     JOIN event e ON tr.event_id = e.id
                      LEFT JOIN attendees a
                                ON tr.session_id = a.session_id
             WHERE tr.session_id = $1
-            GROUP BY tr.session_id, tr.event_id, tr.registration, tr.selected_tickets, tr.orders;
+            GROUP BY tr.session_id, tr.event_id, tr.registration, tr.selected_tickets, tr.orders, e.id, e.name, e.config;
         `;
 
         const result = await query(queryText, [sessionId]);

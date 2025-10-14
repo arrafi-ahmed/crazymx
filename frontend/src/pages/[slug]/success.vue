@@ -6,6 +6,7 @@
   import { useTheme } from 'vuetify'
   import $axios from '@/plugins/axios'
   import { formatPrice, generateQrData } from '@/utils'
+  import { isGroupTicket as checkIsGroupTicket, getQrTitle } from '@/utils/ticketUtils'
 
   definePage({
     name: 'event-register-success-slug',
@@ -97,6 +98,7 @@
                 selectedTickets: selectedTickets,
                 orders: response.data.payload.order,
                 registration: response.data.payload.registration,
+                event: response.data.payload.event,
                 eventId: response.data.payload.registration?.eventId,
               }
             } else {
@@ -126,7 +128,11 @@
         const response = await $axios.get(`/temp-registration/success/${sessionId.value}`, {
           headers: { 'X-Suppress-Toast': 'true' },
         })
-        tempRegistration.value = response.data.payload
+        // Ensure event config is included
+        tempRegistration.value = {
+          ...response.data.payload,
+          event: response.data.payload.event || null,
+        }
       } else {
         error.value
           = 'No registration information provided. Please ensure you completed the registration process.'
@@ -176,6 +182,38 @@
     }
     return []
   })
+
+  // Calculate total ticket quantity from order
+  const totalTicketQuantity = computed(() => {
+    return purchasedTickets.value.reduce((sum, ticket) => sum + ticket.quantity, 0)
+  })
+
+  // Check if this is a group ticket scenario using utility
+  const isGroup = computed(() => {
+    return checkIsGroupTicket({
+      saveAllAttendeesDetails: tempRegistration.value?.event?.config?.saveAllAttendeesDetails,
+      totalQuantity: totalTicketQuantity.value
+    })
+  })
+
+  // Calculate subtotal from purchased tickets
+  const subtotalAmount = computed(() => {
+    return purchasedTickets.value.reduce((sum, ticket) => sum + (ticket.unitPrice * ticket.quantity), 0)
+  })
+
+  // Calculate tax amount
+  const taxAmount = computed(() => {
+    // No tax on free orders
+    if (subtotalAmount.value === 0) return 0
+    
+    const total = tempRegistration.value?.orders?.totalAmount || 0
+    return total - subtotalAmount.value
+  })
+
+  // Get QR code title for attendee using utility
+  function getQrTitleForAttendee(attendee) {
+    return getQrTitle(isGroup.value, attendee.firstName)
+  }
 </script>
 
 <template>
@@ -291,10 +329,6 @@
                     {{ tempRegistration.orders.orderNumber }}
                   </p>
                   <p>
-                    <strong>Total Amount: </strong>
-                    {{ formatPrice(tempRegistration.orders.totalAmount, tempRegistration.orders.currency) }}
-                  </p>
-                  <p>
                     <strong>Status: </strong>
                     <span
                       :class="
@@ -341,6 +375,33 @@
                           }}</span>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <!-- Payment Summary -->
+                  <v-divider class="my-4" />
+                  <div class="payment-summary">
+                    <div class="d-flex justify-space-between mb-2">
+                      <span class="text-body-2">Subtotal:</span>
+                      <span class="text-body-2 font-weight-medium">
+                        {{ formatPrice(subtotalAmount, tempRegistration.orders.currency) }}
+                      </span>
+                    </div>
+                    <div
+                      v-if="taxAmount > 0"
+                      class="d-flex justify-space-between mb-2"
+                    >
+                      <span class="text-body-2">Tax:</span>
+                      <span class="text-body-2 font-weight-medium">
+                        {{ formatPrice(taxAmount, tempRegistration.orders.currency) }}
+                      </span>
+                    </div>
+                    <v-divider class="my-2" />
+                    <div class="d-flex justify-space-between">
+                      <span class="text-h6 font-weight-bold">Total:</span>
+                      <span class="text-h6 font-weight-bold text-primary">
+                        {{ formatPrice(tempRegistration.orders.totalAmount, tempRegistration.orders.currency) }}
+                      </span>
                     </div>
                   </div>
                 </v-card>
@@ -401,7 +462,7 @@
                     <!-- Individual QR Code for each attendee -->
                     <div class="qr-container">
                       <h6 class="qr-title">
-                        QR Code for {{ attendee.firstName }}
+                        {{ getQrTitleForAttendee(attendee) }}
                       </h6>
                       <p class="qr-security-note">
                         <v-icon

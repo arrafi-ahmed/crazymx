@@ -773,13 +773,14 @@ exports.webhook = async (req) => {
                         throw new CustomError("Invalid attendees data structure", 400);
                     }
 
-                    // 1. Save registration first
+                    // 1. Save registration first with timezone data
                     const registrationResult = await registrationService.save({
                         eventId: eventId,
                         status: true,
                         additionalFields: registration?.additionalFields || {},
+                        userTimezone: registration?.userTimezone || 'UTC',
+                        timezoneOffset: registration?.timezoneOffset || 0,
                     });
-                    64;
 
                     // 2. Update attendees with registration_id and save
                     const attendeesWithRegistrationId = attendees.map((attendee) => ({

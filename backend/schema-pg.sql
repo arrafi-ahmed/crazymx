@@ -24,8 +24,8 @@ CREATE TABLE event
     description        TEXT,
     location           VARCHAR(255),
     registration_count INT,
-    start_datetime      TIMESTAMPZ NOT NULL,
-    end_datetime        TIMESTAMPZ,
+    start_datetime     timestampz NOT NULL,
+    end_datetime       timestampz,
     banner             VARCHAR(255),
     landing_config     JSONB,
     config             JSONB,
@@ -43,8 +43,10 @@ CREATE TABLE registration
     id                SERIAL PRIMARY KEY,
     event_id          INT NOT NULL REFERENCES event (id) ON DELETE CASCADE,
     additional_fields JSONB,
+    user_timezone     VARCHAR(100) DEFAULT 'UTC',
+    timezone_offset   INT DEFAULT 0,
     status            BOOLEAN   DEFAULT false,
-    created_at        TIMESTAMP DEFAULT NOW(),
+    created_at        timestampz DEFAULT NOW(),  --updated
     updated_at        TIMESTAMP DEFAULT NOW()
 );
 
