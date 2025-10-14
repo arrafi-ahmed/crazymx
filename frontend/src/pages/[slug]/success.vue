@@ -192,7 +192,7 @@
   const isGroup = computed(() => {
     return checkIsGroupTicket({
       saveAllAttendeesDetails: tempRegistration.value?.event?.config?.saveAllAttendeesDetails,
-      totalQuantity: totalTicketQuantity.value
+      totalQuantity: totalTicketQuantity.value,
     })
   })
 
@@ -205,13 +205,13 @@
   const taxAmount = computed(() => {
     // No tax on free orders
     if (subtotalAmount.value === 0) return 0
-    
+
     const total = tempRegistration.value?.orders?.totalAmount || 0
     return total - subtotalAmount.value
   })
 
   // Get QR code title for attendee using utility
-  function getQrTitleForAttendee(attendee) {
+  function getQrTitleForAttendee (attendee) {
     return getQrTitle(isGroup.value, attendee.firstName)
   }
 </script>

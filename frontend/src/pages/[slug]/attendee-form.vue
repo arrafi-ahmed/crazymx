@@ -212,16 +212,17 @@
 <template>
   <section class="section section-fade">
     <v-container>
+      <PageTitle
+        :subtitle="event?.name"
+        title="Attendee Details"
+      />
+
       <!-- Main Content -->
       <v-row justify="center">
         <v-col
           cols="12"
           md="8"
         >
-          <PageTitle
-            :subtitle="event?.name"
-            title="Attendee Details"
-          />
           <v-card
             v-if="saveAllAttendeesDetails"
             class="mb-6"

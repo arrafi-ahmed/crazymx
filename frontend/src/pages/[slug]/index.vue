@@ -66,13 +66,13 @@
       // Capture user timezone - store in dedicated fields
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const timezoneOffset = new Date().getTimezoneOffset()
-      
+
       registration.userTimezone = userTimezone
       registration.timezoneOffset = timezoneOffset
-      
+
       // Ensure we have event and club data, use defaults if not available
       registration.eventId = event.value?.id || 1
-      
+
       localStorage.setItem('registrationData', JSON.stringify(registration))
       localStorage.setItem('attendeesData', JSON.stringify([attendee]))
 
@@ -133,11 +133,11 @@
 </script>
 
 <template>
-  <div class="event-landing">
+  <section class="section section-fade">
     <!-- Hero Section with fully visible banner -->
     <section class="hero-section">
       <v-container class="py-0">
-        <div class="hero-wrap">
+        <div class="hero-wrap mb-4 mb-md-8">
           <div class="hero-media">
             <v-img
               alt="Event Banner"
@@ -159,22 +159,15 @@
             </div>
           </div>
         </div>
-      </v-container>
-    </section>
 
-    <!-- Registration Form Section -->
-    <section class="registration-section">
-      <v-container class="py-8">
-        <div class="form-container maxw-narrow">
-          <div class="form-header text-center mb-4">
-            <h2 class="form-title">
-              Complete Your Registration
-            </h2>
-            <p class="form-subtitle">
-              Enter your details to proceed to ticket selection
-            </p>
-          </div>
+        <PageTitle
+          pos-title="center"
+          :show-back-button="false"
+          subtitle="Enter your details to proceed to ticket selection"
+          title="Complete Your Registration"
+        />
 
+        <div class="maxw-narrow py-8">
           <v-card
             class="registration-form"
             elevation="2"
@@ -258,7 +251,8 @@
         </div>
       </v-container>
     </section>
-  </div>
+
+  </section>
 </template>
 
 <style scoped>

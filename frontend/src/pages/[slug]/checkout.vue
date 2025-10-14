@@ -31,12 +31,12 @@
   const registration = computed(() => JSON.parse(localStorage.getItem('registrationData')))
 
   // Get event from store
-  const fetchedEvent = computed(() => store.state.event.event)
+  const event = computed(() => store.state.event.event)
 
   // Get currency from event
   const eventCurrency = computed(() => {
     // Check if event has currency field, otherwise default to USD
-    const currency = fetchedEvent.value?.currency
+    const currency = event.value?.currency
     if (currency && typeof currency === 'string' && currency.length === 3) {
       return currency.toUpperCase()
     }
@@ -55,29 +55,29 @@
 
   const taxConfig = computed(() => {
     // Check direct event properties (tax_amount, tax_type) from database
-    const taxAmount = fetchedEvent.value?.taxAmount || fetchedEvent.value?.tax_amount
-    const taxType = fetchedEvent.value?.taxType || fetchedEvent.value?.tax_type
-    
+    const taxAmount = event.value?.taxAmount || event.value?.tax_amount
+    const taxType = event.value?.taxType || event.value?.tax_type
+
     if (taxAmount && taxType) {
-      return { 
-        type: taxType.toLowerCase(), 
-        amount: Number(taxAmount) 
+      return {
+        type: taxType.toLowerCase(),
+        amount: Number(taxAmount),
       }
     }
-    
+
     // Fallback to landingConfig.tax if available (for backward compatibility)
-    const cfg = fetchedEvent.value?.landingConfig?.tax || fetchedEvent.value?.landing_config?.tax
+    const cfg = event.value?.landingConfig?.tax || event.value?.landing_config?.tax
     if (cfg && typeof cfg === 'object') {
       return { type: (cfg.type || 'percent').toLowerCase(), amount: Number(cfg.amount || 0) }
     }
-    
+
     return { type: 'percent', amount: 0 }
   })
 
   const taxAmount = computed(() => {
     // No tax on free orders
     if (subtotalAmount.value === 0) return 0
-    
+
     const { type, amount } = taxConfig.value
     if (!amount || amount <= 0) return 0
     if (type === 'percent') {
@@ -95,19 +95,6 @@
       stripe.value = await loadStripe(stripePublic)
     } catch {
       store.commit('addSnackbar', { text: 'Failed to initialize payment system', color: 'error' })
-    }
-  }
-
-  // Function to get event data by slug
-  async function getEventBySlug (slug) {
-    try {
-      const response = await $axios.get(`/event/getEventBySlug?slug=${slug}`)
-      if (response.data.payload) {
-        return response.data.payload
-      }
-      return null
-    } catch {
-      return null
     }
   }
 
@@ -227,8 +214,8 @@
       }
 
       // Get event data for registration
-      const event = await getEventBySlug(route.params.slug)
-      if (!event) {
+      await store.dispatch('event/setEvent', { slug: route.params.slug })
+      if (!event.value) {
         store.commit('addSnackbar', { text: 'Event not found. Please try again.', color: 'error' })
         return
       }
@@ -236,7 +223,7 @@
       // Capture timezone BEFORE sending
       const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       const timezoneOffset = new Date().getTimezoneOffset()
-      
+
       // Prepare registration data with timezone
       const registrationData = {
         attendees: attendees.value,
@@ -244,9 +231,9 @@
         registration: {
           ...registration.value,
           userTimezone,
-          timezoneOffset
+          timezoneOffset,
         },
-        eventId: event.id,
+        eventId: event.value.id,
       }
 
       // Call backend to process free registration
@@ -333,7 +320,7 @@
   onMounted(async () => {
     // Load event data if not already in store
     const slug = route.params.slug
-    if (slug && (!fetchedEvent.value || !fetchedEvent.value.id)) {
+    if (slug && (!event.value || !event.value.id)) {
       try {
         await store.dispatch('event/setEventBySlug', { slug })
       } catch (error) {
@@ -347,16 +334,16 @@
 <template>
   <section class="section section-fade">
     <v-container>
+      <PageTitle
+        :subtitle="event?.name"
+        title="Checkout"
+      />
+
       <v-row justify="center">
         <v-col
           cols="12"
           lg="10"
-        >
-          <PageTitle
-            :subtitle="event?.name"
-            title="Checkout"
-          />
-        </v-col>
+        />
       </v-row>
 
       <v-row justify="center">
@@ -491,7 +478,7 @@
             elevation="4"
           >
             <v-card-title class="text-h4 text-center pa-6">
-              {{ fetchedEvent?.name || 'Registration' }}
+              {{ event?.name || 'Registration' }}
             </v-card-title>
 
             <v-card-text class="pa-4">

@@ -60,9 +60,9 @@ exports.createPaymentIntent = async ({
                                          payload: {savedRegistration, savedExtrasPurchase, extrasIds},
                                      }) => {
     const lineItems = [];
-    let totalAmount = 0;
+    let subtotal = 0;
 
-    // Get event to get currency
+    // Get event to get currency and tax configuration
     const event = await eventService.getEventById({
         eventId: savedRegistration.eventId,
     });
@@ -74,7 +74,7 @@ exports.createPaymentIntent = async ({
     });
     const eventTicketPrice = tickets.length > 0 ? tickets[0].price : 0; // Assuming one ticket per event for registration
     if (eventTicketPrice > 0) {
-        totalAmount += eventTicketPrice;
+        subtotal += eventTicketPrice;
     }
 
     // Get extras prices
@@ -82,18 +82,36 @@ exports.createPaymentIntent = async ({
         const extras = await eventService.getExtrasByIds({extrasIds});
         extras.forEach((item) => {
             if (item.price > 0) {
-                totalAmount += item.price;
+                subtotal += item.price;
             }
         });
     }
 
-    if (totalAmount <= 0) {
+    if (subtotal <= 0) {
         return {clientSecret: "no-stripe"};
     }
 
-    // Create payment intent
+    // Calculate tax if configured
+    let totalAmount = subtotal;
+    const taxType = event.taxType || event.tax_type;
+    const taxAmountConfig = event.taxAmount || event.tax_amount;
+    
+    if (taxType && taxAmountConfig && subtotal > 0) {
+        const type = taxType.toLowerCase();
+        const amount = Number(taxAmountConfig);
+        
+        if (type === 'percent' && amount > 0) {
+            const taxAmount = Math.round((subtotal * amount) / 100);
+            totalAmount += taxAmount;
+        } else if (type === 'fixed' && amount > 0) {
+            // amount expected in cents
+            totalAmount += Math.round(amount);
+        }
+    }
+
+    // Create payment intent (tax already calculated manually above)
     const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(totalAmount), // Convert to cents
+        amount: Math.round(totalAmount), // Total includes tax if configured
         currency: eventCurrency,
         metadata: {
             registrationId: savedRegistration.id,
@@ -101,7 +119,6 @@ exports.createPaymentIntent = async ({
             extrasPurchaseId: savedExtrasPurchase?.id,
             eventId: savedRegistration.eventId,
         },
-        automatic_tax: {enabled: true},
     });
 
     return {clientSecret: paymentIntent.client_secret};
@@ -110,18 +127,18 @@ exports.createPaymentIntent = async ({
 exports.createOrderPaymentIntent = async ({
                                               payload: {orderId, items, customerEmail, registrationId},
                                           }) => {
-    let totalAmount = 0;
+    let subtotal = 0;
 
-    // Calculate total from items
+    // Calculate subtotal from items
     items.forEach((item) => {
-        totalAmount += item.unitPrice * item.quantity;
+        subtotal += item.unitPrice * item.quantity;
     });
 
-    if (totalAmount <= 0) {
+    if (subtotal <= 0) {
         return {clientSecret: "no-stripe"};
     }
 
-    // Get event currency from registration
+    // Get event currency and tax configuration from registration
     const registration = await registrationService.getRegistrationById({
         registrationId: registrationId,
     });
@@ -129,6 +146,24 @@ exports.createOrderPaymentIntent = async ({
         eventId: registration.eventId,
     });
     const eventCurrency = event?.currency || 'USD';
+
+    // Calculate tax if configured
+    let totalAmount = subtotal;
+    const taxType = event.taxType || event.tax_type;
+    const taxAmountConfig = event.taxAmount || event.tax_amount;
+    
+    if (taxType && taxAmountConfig && subtotal > 0) {
+        const type = taxType.toLowerCase();
+        const amount = Number(taxAmountConfig);
+        
+        if (type === 'percent' && amount > 0) {
+            const taxAmount = Math.round((subtotal * amount) / 100);
+            totalAmount += taxAmount;
+        } else if (type === 'fixed' && amount > 0) {
+            // amount expected in cents
+            totalAmount += Math.round(amount);
+        }
+    }
 
     // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
@@ -147,7 +182,7 @@ exports.createOrderPaymentIntent = async ({
 exports.createExtrasPaymentIntent = async ({
                                                payload: {extrasIds, registrationId, customerEmail, eventId},
                                            }) => {
-    // Get event currency
+    // Get event currency and tax configuration
     const event = await eventService.getEventById({
         eventId: eventId,
     });
@@ -155,16 +190,34 @@ exports.createExtrasPaymentIntent = async ({
 
     // Get extras prices
     const extras = await eventService.getExtrasByIds({extrasIds});
-    let totalAmount = 0;
+    let subtotal = 0;
 
     extras.forEach((item) => {
         if (item.price > 0) {
-            totalAmount += item.price;
+            subtotal += item.price;
         }
     });
 
-    if (totalAmount <= 0) {
+    if (subtotal <= 0) {
         return {clientSecret: "no-stripe"};
+    }
+
+    // Calculate tax if configured
+    let totalAmount = subtotal;
+    const taxType = event.taxType || event.tax_type;
+    const taxAmountConfig = event.taxAmount || event.tax_amount;
+    
+    if (taxType && taxAmountConfig && subtotal > 0) {
+        const type = taxType.toLowerCase();
+        const amount = Number(taxAmountConfig);
+        
+        if (type === 'percent' && amount > 0) {
+            const taxAmount = Math.round((subtotal * amount) / 100);
+            totalAmount += taxAmount;
+        } else if (type === 'fixed' && amount > 0) {
+            // amount expected in cents
+            totalAmount += Math.round(amount);
+        }
     }
 
     // Create payment intent
@@ -551,17 +604,23 @@ exports.createSecurePaymentIntent = async ({
             });
         }
 
-        // Apply event-level tax if configured
-        const taxConfig = (event.landingConfig || event.landing_config || {}).tax || null;
-        if (taxConfig && typeof taxConfig === 'object') {
-            const type = (taxConfig.type || '').toLowerCase();
-            const amount = Number(taxConfig.amount || 0);
-            if (type === 'percent' && amount > 0) {
-                const taxAmount = Math.round((totalAmount * amount) / 100);
-                totalAmount += taxAmount;
-            } else if (type === 'fixed' && amount > 0) {
-                // amount expected in cents
-                totalAmount += Math.round(amount);
+        // Apply event-level tax if configured (from database columns)
+        // Only apply tax if subtotal > 0
+        if (totalAmount > 0) {
+            const taxType = event.taxType || event.tax_type;
+            const taxAmountConfig = event.taxAmount || event.tax_amount;
+            
+            if (taxType && taxAmountConfig) {
+                const type = taxType.toLowerCase();
+                const amount = Number(taxAmountConfig);
+                
+                if (type === 'percent' && amount > 0) {
+                    const taxAmount = Math.round((totalAmount * amount) / 100);
+                    totalAmount += taxAmount;
+                } else if (type === 'fixed' && amount > 0) {
+                    // amount expected in cents
+                    totalAmount += Math.round(amount);
+                }
             }
         }
 

@@ -2,7 +2,7 @@
   import { useRoute, useRouter } from 'vue-router'
 
   // Props
-  const props = defineProps({
+  const { title, subtitle, showBackButton, backRoute } = defineProps({
     title: {
       type: String,
       required: true,
@@ -14,6 +14,14 @@
     showBackButton: {
       type: Boolean,
       default: true,
+    },
+    backRoute: {
+      type: [String, Object],
+      default: null,
+    },
+    posTitle: {
+      type: String,
+      default: 'start',
     },
   })
 
@@ -40,14 +48,21 @@
       router.push({ name: 'dashboard-admin' })
       return
     }
+    if (backRoute) {
+      router.push(backRoute)
+      return
+    }
     // Default: browser back
     router.back()
   }
 </script>
 
 <template>
-  <div>
-    <div class="d-flex align-center justify-space-between mb-2">
+  <v-row :justify="posTitle">
+    <v-col
+      class="d-flex align-center justify-space-between mb-2"
+      :cols="posTitle==='center'?'auto':12"
+    >
       <div class="d-flex align-center">
         <v-btn
           v-if="showBackButton"
@@ -56,16 +71,16 @@
           variant="text"
           @click="handleBack"
         />
-        <div class="ml-2">
+        <div class="ml-2" :class="{ 'text-center': posTitle==='center' }">
           <div class="text-h4 font-weight-bold">{{ title }}</div>
-          <div v-if="subtitle" class="text-body-2 text-medium-emphasis">{{ subtitle }}</div>
+          <div v-if="subtitle" class="text-body-2 text-medium-emphasis pt-2">{{ subtitle }}</div>
         </div>
       </div>
       <div class="d-flex align-center">
         <slot name="actions" />
       </div>
-    </div>
-  </div>
+    </v-col>
+  </v-row>
 
 </template>
 

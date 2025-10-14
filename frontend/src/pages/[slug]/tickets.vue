@@ -269,17 +269,10 @@
   <!-- Tickets Section -->
   <section class="section section-fade">
     <v-container>
-      <v-row justify="center">
-        <v-col
-          cols="12"
-          md="8"
-        >
-          <PageTitle
-            :subtitle="event?.name"
-            title="Available Tickets"
-          />
-        </v-col>
-      </v-row>
+      <PageTitle
+        :subtitle="event?.name"
+        title="Available Tickets"
+      />
 
       <v-row v-if="isLoading" justify="center">
         <v-col
