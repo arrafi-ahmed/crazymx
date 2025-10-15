@@ -214,7 +214,7 @@
       }
 
       // Get event data for registration
-      await store.dispatch('event/setEvent', { slug: route.params.slug })
+      await store.dispatch('event/setEventBySlug', { slug: route.params.slug })
       if (!event.value) {
         store.commit('addSnackbar', { text: 'Event not found. Please try again.', color: 'error' })
         return

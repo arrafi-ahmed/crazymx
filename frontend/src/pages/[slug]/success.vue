@@ -399,7 +399,7 @@
                     <v-divider class="my-2" />
                     <div class="d-flex justify-space-between">
                       <span class="text-h6 font-weight-bold">Total:</span>
-                      <span class="text-h6 font-weight-bold text-primary">
+                      <span class="text-h6 font-weight-bold">
                         {{ formatPrice(tempRegistration.orders.totalAmount, tempRegistration.orders.currency) }}
                       </span>
                     </div>
@@ -412,8 +412,8 @@
                 v-if="tempRegistration?.attendees?.length > 0"
                 class="mb-6"
               >
-                <h4 class="text-h6 mb-6 text-center">
-                  Registered Attendees
+                <h4 class="text-h6 text-center">
+                  {{isGroup && 'Registrant' || 'Registered Attendees' }}
                 </h4>
                 <div class="attendees-container">
                   <div
@@ -437,7 +437,7 @@
 
                       <!-- Ticket Information for this attendee -->
                       <div
-                        v-if="getAttendeeTicket(attendee)"
+                        v-if="!isGroup && getAttendeeTicket(attendee)"
                         class="ticket-info"
                       >
                         <div class="ticket-badge">
@@ -717,8 +717,6 @@
 
 .ticket-summary-price {
   font-size: 0.875rem;
-  color: rgb(var(--v-theme-primary));
-  font-weight: 600;
 }
 
 .ticket-summary-qty {
@@ -731,8 +729,6 @@
 
 .ticket-summary-total {
   font-size: 0.875rem;
-  color: rgb(var(--v-theme-success));
-  font-weight: 700;
   background: rgba(var(--v-theme-success), 0.1);
   padding: 4px 8px;
   border-radius: 6px;
