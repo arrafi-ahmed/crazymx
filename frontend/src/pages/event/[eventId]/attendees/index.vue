@@ -176,7 +176,6 @@
           attendeeDetailsDialog.value = !attendeeDetailsDialog.value
           Object.assign(editingAttendee, editingAttendeeInit)
           // Refresh the attendee list to show updated status
-          loadItems()
         })
       return
     }
@@ -194,7 +193,6 @@
         attendeeDetailsDialog.value = !attendeeDetailsDialog.value
         Object.assign(editingAttendee, editingAttendeeInit)
         // Refresh the attendee list to show updated status
-        loadItems()
       })
   }
 
