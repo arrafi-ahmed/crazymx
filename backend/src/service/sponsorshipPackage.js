@@ -1,6 +1,6 @@
 const {query} = require("../db");
 const CustomError = require("../model/CustomError");
-const {defaultCurrency} = require("../others/util");
+const {defaultCurrency} = require("../utils/common");
 
 exports.save = async ({payload}) => {
     if (!payload) {

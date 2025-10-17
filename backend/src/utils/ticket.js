@@ -9,7 +9,7 @@
  * @param {number} params.totalQuantity - Total ticket quantity
  * @returns {boolean} True if group ticket
  */
-function isGroupTicket({ saveAllAttendeesDetails, totalQuantity }) {
+function isGroupTicket({saveAllAttendeesDetails, totalQuantity}) {
     const saveAll = saveAllAttendeesDetails === true || saveAllAttendeesDetails === 'true';
     return !saveAll && totalQuantity > 1;
 }
@@ -20,7 +20,7 @@ function isGroupTicket({ saveAllAttendeesDetails, totalQuantity }) {
  * @returns {string} QR code message
  */
 function getQrMessage(isGroup) {
-    return isGroup 
+    return isGroup
         ? 'This QR code is valid for entire group.'
         : 'This QR code is valid for above attendee only.';
 }
@@ -32,7 +32,7 @@ function getQrMessage(isGroup) {
  * @returns {string} Email subject
  */
 function getEmailSubject(isGroup, eventName) {
-    return isGroup 
+    return isGroup
         ? `🎟️ Your Tickets for ${eventName}`
         : `🎟️ Your Ticket for ${eventName}`;
 }

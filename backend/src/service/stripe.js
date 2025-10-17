@@ -9,7 +9,7 @@ const emailService = require("./email");
 const tempRegistrationService = require("./tempRegistration");
 const orderService = require("./order");
 const {v4: uuidv4} = require("uuid");
-const {defaultCurrency} = require("../others/util");
+const {defaultCurrency} = require("../utils/common");
 const sponsorshipService = require("./sponsorship");
 const attendeesService = require("./attendees");
 
@@ -95,11 +95,11 @@ exports.createPaymentIntent = async ({
     let totalAmount = subtotal;
     const taxType = event.taxType || event.tax_type;
     const taxAmountConfig = event.taxAmount || event.tax_amount;
-    
+
     if (taxType && taxAmountConfig && subtotal > 0) {
         const type = taxType.toLowerCase();
         const amount = Number(taxAmountConfig);
-        
+
         if (type === 'percent' && amount > 0) {
             const taxAmount = Math.round((subtotal * amount) / 100);
             totalAmount += taxAmount;
@@ -151,11 +151,11 @@ exports.createOrderPaymentIntent = async ({
     let totalAmount = subtotal;
     const taxType = event.taxType || event.tax_type;
     const taxAmountConfig = event.taxAmount || event.tax_amount;
-    
+
     if (taxType && taxAmountConfig && subtotal > 0) {
         const type = taxType.toLowerCase();
         const amount = Number(taxAmountConfig);
-        
+
         if (type === 'percent' && amount > 0) {
             const taxAmount = Math.round((subtotal * amount) / 100);
             totalAmount += taxAmount;
@@ -206,11 +206,11 @@ exports.createExtrasPaymentIntent = async ({
     let totalAmount = subtotal;
     const taxType = event.taxType || event.tax_type;
     const taxAmountConfig = event.taxAmount || event.tax_amount;
-    
+
     if (taxType && taxAmountConfig && subtotal > 0) {
         const type = taxType.toLowerCase();
         const amount = Number(taxAmountConfig);
-        
+
         if (type === 'percent' && amount > 0) {
             const taxAmount = Math.round((subtotal * amount) / 100);
             totalAmount += taxAmount;
@@ -600,7 +600,6 @@ exports.createSecurePaymentIntent = async ({
                 title: dbTicket.title,
                 unitPrice: dbTicket.price,
                 quantity: frontendItem.quantity,
-                currentStock: dbTicket.currentStock,
             });
         }
 
@@ -609,11 +608,11 @@ exports.createSecurePaymentIntent = async ({
         if (totalAmount > 0) {
             const taxType = event.taxType || event.tax_type;
             const taxAmountConfig = event.taxAmount || event.tax_amount;
-            
+
             if (taxType && taxAmountConfig) {
                 const type = taxType.toLowerCase();
                 const amount = Number(taxAmountConfig);
-                
+
                 if (type === 'percent' && amount > 0) {
                     const taxAmount = Math.round((totalAmount * amount) / 100);
                     totalAmount += taxAmount;

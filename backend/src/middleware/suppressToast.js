@@ -1,4 +1,4 @@
-const {HTTP_STATUS} = require("../others/util");
+const {HTTP_STATUS} = require("../utils/common");
 
 const suppressToastMiddleware = (req, res, next) => {
     // Store the original json method

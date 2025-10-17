@@ -17,7 +17,7 @@ const {
     uncaughtErrHandler,
 } = require("./src/middleware/errHandler");
 const suppressToastMiddleware = require("./src/middleware/suppressToast");
-const {appInfo} = require("./src/others/util");
+const {appInfo} = require("./src/utils/common");
 const ApiResponse = require("./src/model/ApiResponse");
 const port = process.env.PORT || 3001;
 

@@ -8,7 +8,7 @@ const {
 } = require("../middleware/auth");
 const {uploadEventBanner} = require("../middleware/upload");
 const compressImages = require("../middleware/compress");
-const {ifSudo, ifAdmin} = require("../others/util");
+const {ifSudo, ifAdmin} = require("../utils/common");
 
 router.post(
     "/save",
@@ -72,8 +72,18 @@ router.post("/saveExtras", auth, isAdminEventAuthor, async (req, res, next) => {
 
 router.get("/getAllEvents", async (req, res, next) => {
     try {
+        // Extract pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const itemsPerPage = parseInt(req.query.itemsPerPage) || 6;
+        const fetchTotalCount = req.query.fetchTotalCount === 'true';
+        const offset = (page - 1) * itemsPerPage;
+
         const results = await eventService.getAllEvents({
             clubId: req.query.clubId,
+            page,
+            itemsPerPage,
+            offset,
+            fetchTotalCount,
         });
         res.status(200).json(new ApiResponse(null, results));
     } catch (err) {

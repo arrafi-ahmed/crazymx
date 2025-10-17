@@ -3,7 +3,7 @@ const CustomError = require("../model/CustomError");
 const fs = require("fs");
 const path = require("path");
 const handlebars = require("handlebars");
-const {generateQrCode, getApiPublicImgUrl} = require("../others/util");
+const {generateQrCode, getApiPublicImgUrl} = require("../utils/common");
 const attendeesService = require("./attendees");
 const eventService = require("./event");
 
@@ -227,6 +227,11 @@ exports.scanByRegistrationId = async ({qrCodeData, eventId, userId}) => {
     };
     const checkinRecord = await exports.save({newCheckin});
 
+    // Get event config to check saveAllAttendeesDetails
+    const eventService = require('./event');
+    const event = await eventService.getEventById({eventId});
+    const saveAllAttendees = event?.config?.saveAllAttendeesDetails;
+
     // Compute total attendees from orders.items for this registration
     const totalSql = `
         SELECT COALESCE(SUM((item->>'quantity')::int), 0) AS total_attendees
@@ -237,10 +242,24 @@ exports.scanByRegistrationId = async ({qrCodeData, eventId, userId}) => {
     const totalResult = await query(totalSql, [attendee.registrationId]);
     const totalAttendees = totalResult.rows?.[0]?.totalAttendees || 0;
 
+    // If saveAllAttendeesDetails = false, get orders.items data
+    let items = null;
+    if (!saveAllAttendees || saveAllAttendees === false || saveAllAttendees === 'false') {
+        const itemsSql = `
+            SELECT o.items
+            FROM orders o
+            WHERE o.registration_id = $1
+            LIMIT 1
+        `;
+        const itemsResult = await query(itemsSql, [attendee.registrationId]);
+        items = itemsResult.rows?.[0]?.items || null;
+    }
+
     return {
         ...attendee,
         checkinTime: checkinRecord.createdAt,
-        totalAttendees
+        totalAttendees,
+        items
     };
 };
 

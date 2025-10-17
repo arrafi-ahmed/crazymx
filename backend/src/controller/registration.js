@@ -139,18 +139,32 @@ router.get(
         try {
             let results;
 
+            // Extract pagination parameters
+            const page = parseInt(req.query.page) || 1;
+            const itemsPerPage = parseInt(req.query.itemsPerPage) || 10;
+            const fetchTotalCount = req.query.fetchTotalCount === 'true';
+            const offset = (page - 1) * itemsPerPage;
+
             if (req.query.searchKeyword && req.query.searchKeyword.trim()) {
                 // Use search function when keyword is provided
                 results = await registrationService.searchAttendees({
-                    eventId: req.query.eventId,
+                    event: req.query.event,
                     searchKeyword: req.query.searchKeyword,
                     sortBy: req.query.sortBy,
+                    page,
+                    itemsPerPage,
+                    offset,
+                    fetchTotalCount,
                 });
             } else {
                 // Use get function when no search keyword
                 results = await registrationService.getAttendees({
-                    eventId: req.query.eventId,
+                    event: req.query.event,
                     sortBy: req.query.sortBy,
+                    page,
+                    itemsPerPage,
+                    offset,
+                    fetchTotalCount,
                 });
             }
 

@@ -1,5 +1,5 @@
 const helmet = require("helmet");
-const {excludedSecurityURLs} = require("../others/util");
+const {excludedSecurityURLs} = require("../utils/common");
 
 const customHelmet = (req, res, next) => {
     const isExcluded = excludedSecurityURLs.some((url) =>

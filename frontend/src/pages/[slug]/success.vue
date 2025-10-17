@@ -413,7 +413,7 @@
                 class="mb-6"
               >
                 <h4 class="text-h6 text-center">
-                  {{isGroup && 'Registrant' || 'Registered Attendees' }}
+                  {{ isGroup && 'Registrant' || 'Registered Attendees' }}
                 </h4>
                 <div class="attendees-container">
                   <div

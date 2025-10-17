@@ -2,7 +2,7 @@ const CustomError = require("../model/CustomError");
 const {query} = require("../db");
 const {v4: uuidv4} = require("uuid");
 const exceljs = require("exceljs");
-const {formatTime} = require("../others/util");
+const {formatTime} = require("../utils/common");
 const formService = require("../service/form");
 const eventService = require("./event");
 const ticketService = require("./ticket");
@@ -12,6 +12,7 @@ const tempRegistrationService = require("./tempRegistration");
 const orderService = require("./order");
 const stripeService = require("./stripe");
 const {log} = require("handlebars");
+const {isGroupTicket} = require("../utils/ticket");
 
 // Cleanup expired temporary registration data
 exports.cleanupExpiredTempData = async () => {
@@ -527,7 +528,31 @@ exports.getRegistrationWithAttendees = async ({registrationId}) => {
 };
 
 // Get all attendees for an event (flattened structure - one row per attendee)
-exports.getAttendees = async ({eventId, sortBy = "registration"}) => {
+exports.getAttendees = async ({
+                                  event,
+                                  sortBy = "registration",
+                                  page = 1,
+                                  itemsPerPage = 10,
+                                  offset = 0,
+                                  fetchTotalCount = false
+                              }) => {
+    const saveAllAttendees = JSON.parse(event.config?.saveAllAttendeesDetails)
+
+    // Get total count if requested
+    let totalCount = 0;
+    if (fetchTotalCount) {
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM registration r
+                     INNER JOIN attendees a ON r.id = a.registration_id
+            WHERE r.event_id = $1
+              AND r.status = true
+        `;
+        const countResult = await query(countSql, [event.id]);
+        totalCount = parseInt(countResult.rows[0].total);
+    }
+
+    //@formatter:off
     const sql = `
         SELECT r.id         as registration_id,
                r.event_id   as event_id,
@@ -548,32 +573,77 @@ exports.getAttendees = async ({eventId, sortBy = "registration"}) => {
                a.updated_at as attendee_updated_at,
                c.id         as checkin_id,
                c.created_at as checkin_time
+            ${!saveAllAttendees ? ', o.items as items' : ''}
         FROM registration r
                  INNER JOIN attendees a ON r.id = a.registration_id
                  LEFT JOIN ticket t ON a.ticket_id = t.id
                  LEFT JOIN checkin c ON a.id = c.attendee_id
+            ${!saveAllAttendees ? ' LEFT JOIN orders o ON r.id = o.registration_id' : ''}                
         WHERE r.event_id = $1
-        ORDER BY CASE WHEN $2 = 'checkin' THEN c.created_at END DESC,
-                 CASE WHEN $2 = 'status' THEN r.status END DESC,
-                 CASE WHEN $2 = 'registration' OR $2 IS NULL THEN r.created_at END DESC
+          AND r.status = true
+        ORDER BY 
+          CASE WHEN $2 = 'checkin' THEN 
+            CASE WHEN c.created_at IS NOT NULL THEN 0 ELSE 1 END
+          END,          
+          CASE WHEN $2 = 'registration' OR $2 IS NULL THEN r.created_at END DESC
+        LIMIT $3 OFFSET $4
     `;
+    
+    //@formatter:on
+    const result = await query(sql, [event.id, sortBy, itemsPerPage, offset]);
 
-    const result = await query(sql, [eventId, sortBy]);
-
-    return result.rows;
+    return {
+        items: result.rows,
+        totalItems: totalCount,
+        page,
+        itemsPerPage,
+        totalPages: Math.ceil(totalCount / itemsPerPage)
+    };
 };
 
 // Search attendees by keyword (flattened structure - one row per attendee)
 exports.searchAttendees = async ({
-                                     eventId,
+                                     event,
                                      searchKeyword,
                                      sortBy = "registration",
+                                     page = 1,
+                                     itemsPerPage = 10,
+                                     offset = 0,
+                                     fetchTotalCount = false
                                  }) => {
     if (!searchKeyword || searchKeyword.trim() === "") {
-        return await exports.getAttendees({eventId, sortBy});
+        // If no search keyword, fall back to getAttendees
+        return await exports.getAttendees({
+            event,
+            sortBy,
+            page,
+            itemsPerPage,
+            offset,
+            fetchTotalCount
+        });
     }
 
     const keyword = `%${searchKeyword.trim()}%`;
+
+    // Get total count if requested
+    let totalCount = 0;
+    if (fetchTotalCount) {
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM registration r
+                     INNER JOIN attendees a ON r.id = a.registration_id
+            WHERE r.event_id = $1
+              AND r.status = true
+              AND (
+                a.first_name ILIKE $2 OR
+                    a.last_name ILIKE $2 OR
+                    a.email ILIKE $2 OR
+                    a.phone ILIKE $2
+                )
+        `;
+        const countResult = await query(countSql, [event.id, keyword]);
+        totalCount = parseInt(countResult.rows[0].total);
+    }
 
     const sql = `
         SELECT r.id         as registration_id,
@@ -607,14 +677,24 @@ exports.searchAttendees = async ({
                 a.email ILIKE $2 OR
                 a.phone ILIKE $2
             )
-        ORDER BY CASE WHEN $3 = 'checkin' THEN c.created_at END DESC,
-                 CASE WHEN $3 = 'status' THEN r.status END DESC,
+        ORDER BY CASE
+                     WHEN $3 = 'checkin' THEN
+                         CASE WHEN c.created_at IS NOT NULL THEN 0 ELSE 1 END
+                     END,
                  CASE WHEN $3 = 'registration' OR $3 IS NULL THEN r.created_at END DESC
+            LIMIT $4
+        OFFSET $5
     `;
 
-    const result = await query(sql, [eventId, keyword, sortBy]);
+    const result = await query(sql, [event.id, keyword, sortBy, itemsPerPage, offset]);
 
-    return result.rows;
+    return {
+        items: result.rows,
+        totalItems: totalCount,
+        page,
+        itemsPerPage,
+        totalPages: Math.ceil(totalCount / itemsPerPage)
+    };
 };
 
 exports.removeRegistration = async ({eventId, registrationId}) => {
@@ -663,7 +743,16 @@ exports.scanByExtrasPurchaseId = async ({qrCodeData, eventId}) => {
 };
 
 exports.downloadAttendees = async ({eventId}) => {
-    const attendees = await exports.getAttendees({eventId});
+    // For download, we need all attendees without pagination
+    // First get the event to pass to getAttendees
+    const eventService = require('./event');
+    const event = await eventService.getEvent({eventId});
+
+    const attendeesResult = await exports.getAttendees({
+        event,
+        fetchTotalCount: false
+    });
+    const attendees = attendeesResult.items;
     const formQuestions = await formService.getFormQuestions({eventId});
 
     if (attendees.length === 0)

@@ -1,20 +1,20 @@
 const handlebars = require("handlebars");
 const fs = require("fs");
 const path = require("path");
-const {generateQrCode, appInfo, generateQrData} = require("../others/util");
-const {formatTime} = require("../others/util");
+const {generateQrCode, appInfo, generateQrData} = require("../utils/common");
+const {formatTime} = require("../utils/common");
 const {
     formatInTimezone,
     formatLongDate,
     formatEventDateTimeRange,
     getTimezoneAbbreviation,
-} = require("../others/dateUtils");
+} = require("../utils/date");
 const {
     isGroupTicket,
     getQrMessage,
     getEmailSubject,
     isRegistrantDetails,
-} = require("../utils/ticketUtils");
+} = require("../utils/ticket");
 const {createTransport} = require("nodemailer");
 const registrationService = require("./registration");
 const CustomError = require("../model/CustomError");
@@ -88,7 +88,7 @@ const emailTemplatePath = path.join(
 const emailTemplateSource = fs.readFileSync(emailTemplatePath, "utf8");
 
 // Register Handlebars helper for currency formatting
-handlebars.registerHelper('formatCurrency', function(amount, currency) {
+handlebars.registerHelper('formatCurrency', function (amount, currency) {
     const currencySymbols = {
         'USD': '$',
         'GBP': '£',
@@ -140,7 +140,7 @@ exports.sendTicketByAttendeeId = async ({attendeeId}) => {
     const totalTickets = orderResult.rows[0]?.totalTickets || 1;
     const orderItems = orderResult.rows[0]?.itemsDetail || [];
     const hasMultipleTicketTypes = orderItems.length > 1;
-    
+
     // Calculate payment summary
     const subtotal = orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
     const totalAmount = orderResult.rows[0]?.totalAmount || subtotal;
@@ -250,7 +250,7 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
     const totalTickets = orderResult.rows[0]?.totalTickets || 1;
     const orderItems = orderResult.rows[0]?.itemsDetail || [];
     const hasMultipleTicketTypes = orderItems.length > 1;
-    
+
     // Calculate payment summary
     const subtotal = orderItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
     const totalAmount = orderResult.rows[0]?.totalAmount || subtotal;
@@ -358,7 +358,7 @@ exports.sendTicketsByRegistrationId = async ({registrationId}) => {
             // Find the attendee's specific ticket price
             const attendeeTicket = orderItems.find(item => item.ticketTitle === attendee.ticketTitle) || orderItems[0];
             const attendeeTicketPrice = attendeeTicket?.unitPrice || 0;
-            
+
             const html = compileTicketTemplate({
                 eventName: event.name,
                 name: `${attendee.firstName} ${attendee.lastName}`,

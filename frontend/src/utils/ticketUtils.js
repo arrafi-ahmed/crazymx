@@ -9,7 +9,7 @@
  * @param {number} params.totalQuantity - Total ticket quantity
  * @returns {boolean} True if group ticket
  */
-export function isGroupTicket({ saveAllAttendeesDetails, totalQuantity }) {
+function isGroupTicket ({ saveAllAttendeesDetails, totalQuantity }) {
   const saveAll = saveAllAttendeesDetails === true || saveAllAttendeesDetails === 'true'
   return !saveAll && totalQuantity > 1
 }
@@ -20,7 +20,8 @@ export function isGroupTicket({ saveAllAttendeesDetails, totalQuantity }) {
  * @param {string} firstName - Attendee first name
  * @returns {string} QR code title
  */
-export function getQrTitle(isGroup, firstName) {
+function getQrTitle (isGroup, firstName) {
   return isGroup ? 'QR Code for the whole group:' : `QR Code for ${firstName}`
 }
 
+module.exports = { isGroupTicket, getQrTitle }

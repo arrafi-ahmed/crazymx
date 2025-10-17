@@ -1,7 +1,7 @@
 const gm = require("gm").subClass({imageMagick: true});
 const fs = require("fs");
 const {promisify} = require("util");
-const {getFilePath, getPrefix} = require("../others/util");
+const {getFilePath, getPrefix} = require("../utils/common");
 const path = require("path");
 
 const unlinkAsync = promisify(fs.unlink);

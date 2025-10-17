@@ -6,11 +6,20 @@ export const state = {
   events: [],
   event: {},
   extras: [],
+  pagination: {
+    totalItems: 0,
+    page: 1,
+    itemsPerPage: 6,
+    totalPages: 0,
+  },
 }
 
 export const mutations = {
   setEvents (state, payload) {
     state.events = payload
+  },
+  setPagination (state, payload) {
+    state.pagination = payload
   },
   setEvent (state, payload) {
     state.event = payload
@@ -58,9 +67,22 @@ export const actions = {
   setEvents ({ commit }, request) {
     return new Promise((resolve, reject) => {
       $axios
-        .get('/event/getAllEvents', { params: { clubId: request } })
+        .get('/event/getAllEvents', {
+          params: {
+            clubId: request.clubId,
+            page: request.page || 1,
+            itemsPerPage: request.itemsPerPage || 6,
+            fetchTotalCount: request.fetchTotalCount || true,
+          },
+        })
         .then(response => {
-          commit('setEvents', response.data?.payload)
+          commit('setEvents', response.data?.payload?.items || [])
+          commit('setPagination', {
+            totalItems: response.data?.payload?.totalItems || 0,
+            page: response.data?.payload?.page || 1,
+            itemsPerPage: response.data?.payload?.itemsPerPage || 6,
+            totalPages: response.data?.payload?.totalPages || 0,
+          })
           resolve(response)
         })
         .catch(error => {

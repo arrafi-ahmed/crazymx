@@ -1,5 +1,5 @@
 const cors = require("cors");
-const {excludedSecurityURLs} = require("../others/util");
+const {excludedSecurityURLs} = require("../utils/common");
 
 const customCors = (req, res, next) => {
     const baseUrl = process.env.VUE_BASE_URL;

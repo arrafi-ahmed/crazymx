@@ -144,13 +144,16 @@ export const actions = {
       $axios
         .get('/registration/getAttendees', {
           params: {
-            eventId: request.eventId,
+            page: request.page,
+            itemsPerPage: request.itemsPerPage,
+            fetchTotalCount: request.fetchTotalCount,
+            event: request.event,
             searchKeyword: request.searchKeyword,
             sortBy: request?.sortBy,
           },
         })
         .then(response => {
-          commit('setAttendees', response.data?.payload)
+          commit('setAttendees', response.data?.payload?.items)
           resolve(response.data?.payload)
         })
         .catch(error => {

@@ -2,7 +2,7 @@ const Busboy = require("busboy");
 const path = require("path");
 const fs = require("fs");
 const CustomError = require("../model/CustomError");
-const {getDirPath} = require("../others/util");
+const {getDirPath} = require("../utils/common");
 
 const maxSize = 25 * 1024 * 1024; // 25 MB
 const tempDir = getDirPath("tmp");

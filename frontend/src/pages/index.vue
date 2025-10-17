@@ -2,7 +2,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useStore } from 'vuex'
-  
+
   import { formatEventDateDisplay, getApiPublicImageUrl, getClientPublicImageUrl } from '@/utils'
 
   definePage({
@@ -19,9 +19,12 @@
   // Reactive data
   const isLoading = ref(true)
   const upcomingEvents = ref([])
+  const currentPage = ref(1)
+  const itemsPerPage = ref(6)
 
   // Computed properties
   const events = computed(() => store.state.event.events)
+  const pagination = computed(() => store.state.event.pagination)
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
 
   // Format event data for display
@@ -129,22 +132,43 @@
   }
 
   // Fetch events
-  async function fetchEvents () {
+  async function fetchEvents (page = 1, isInitialLoad = false) {
     try {
-      isLoading.value = true
+      if (isInitialLoad) {
+        isLoading.value = true
+      } else {
+        // Use store progress for page transitions
+        store.commit('setProgress', true)
+      }
 
       // Get club ID from current user or use default
       const clubId = currentUser.value?.clubId || 1
-      // Fetch events from store
-      await store.dispatch('event/setEvents', clubId)
+      // Fetch events from store with pagination
+      await store.dispatch('event/setEvents', {
+        clubId,
+        page,
+        itemsPerPage: itemsPerPage.value,
+        fetchTotalCount: true,
+      })
 
       // Format and set upcoming events
       upcomingEvents.value = formatEventData(events.value)
     } catch (error) {
       console.error('Error fetching events:', error)
     } finally {
-      isLoading.value = false
+      if (isInitialLoad) {
+        isLoading.value = false
+      } else {
+        // Clear store progress for page transitions
+        store.commit('setProgress', false)
+      }
     }
+  }
+
+  // Handle page change
+  function onPageChange (page) {
+    currentPage.value = page
+    fetchEvents(page, false)
   }
 
   function navigateToEvent (event) {
@@ -156,7 +180,7 @@
   }
 
   onMounted(() => {
-    fetchEvents()
+    fetchEvents(1, true)
   })
 </script>
 
@@ -291,6 +315,19 @@
           </v-col>
         </v-row>
 
+        <!-- Pagination -->
+        <div
+          v-if="!isLoading && pagination.totalPages > 1"
+          class="pagination-container"
+        >
+          <v-pagination
+            v-model="currentPage"
+            :length="pagination.totalPages"
+            :total-visible="7"
+            @update:model-value="onPageChange"
+          />
+        </div>
+
         <!-- No Events State -->
         <div
           v-if="!isLoading && upcomingEvents.length === 0"
@@ -308,54 +345,6 @@
       </div>
     </section>
 
-    <!-- Sponsors Section -->
-    <section class="sponsors-section">
-      <div class="container">
-        <div class="sponsors-content">
-          <h2 class="sponsors-title">
-            SPONSORS
-          </h2>
-          <p class="sponsors-subtitle">
-            Supporting our musical mission
-          </p>
-          <div class="sponsors-grid">
-            <div class="sponsor-item">
-              <div class="sponsor-placeholder">
-                <v-icon
-                  color="primary"
-                  size="48"
-                >
-                  mdi-heart
-                </v-icon>
-                <span>Community Sponsor</span>
-              </div>
-            </div>
-            <div class="sponsor-item">
-              <div class="sponsor-placeholder">
-                <v-icon
-                  color="primary"
-                  size="48"
-                >
-                  mdi-music
-                </v-icon>
-                <span>Music Foundation</span>
-              </div>
-            </div>
-            <div class="sponsor-item">
-              <div class="sponsor-placeholder">
-                <v-icon
-                  color="primary"
-                  size="48"
-                >
-                  mdi-church
-                </v-icon>
-                <span>Cathedral Support</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -695,70 +684,6 @@
   margin: 0;
 }
 
-/* Sponsors Section */
-.sponsors-section {
-  padding: 80px 0;
-  background: #f8f7f5;
-}
-
-.sponsors-content {
-  text-align: center;
-}
-
-.sponsors-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 16px;
-  letter-spacing: 2px;
-}
-
-.sponsors-subtitle {
-  font-size: 1.2rem;
-  color: #7f8c8d;
-  margin-bottom: 60px;
-}
-
-.sponsors-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 40px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.sponsor-item {
-  display: flex;
-  justify-content: center;
-}
-
-.sponsor-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 32px 24px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
-  min-height: 140px;
-  justify-content: center;
-}
-
-.sponsor-placeholder:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-}
-
-.sponsor-placeholder span {
-  font-size: 0.9rem;
-  color: #2c3e50;
-  font-weight: 500;
-  text-align: center;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero {
@@ -775,8 +700,7 @@
   }
 
   .section-title,
-  .about-title,
-  .sponsors-title {
+  .about-title {
     font-size: 2rem;
   }
 
@@ -789,10 +713,6 @@
     gap: 40px;
   }
 
-  .sponsors-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -814,13 +734,20 @@
   }
 
   .events-section,
-  .about-section,
-  .sponsors-section {
+  .about-section {
     padding: 60px 0;
   }
+}
 
-  .sponsors-title {
-    font-size: 1.75rem;
-  }
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  padding: 20px 0;
+}
+
+.pagination-container .v-pagination {
+  background: transparent;
 }
 </style>

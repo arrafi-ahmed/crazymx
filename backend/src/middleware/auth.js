@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const {getEventByEventIdnClubId} = require("../service/event");
-const {ifAdmin, ifSudo, HTTP_STATUS} = require("../others/util");
+const {ifAdmin, ifSudo, HTTP_STATUS} = require("../utils/common");
 const ApiResponse = require("../model/ApiResponse");
 
 const auth = (req, res, next) => {
@@ -54,10 +54,9 @@ const isAdminEventAuthor = async (req, res, next) => {
     if (ifSudo(currentUser.role)) return next();
 
     const eventId =
-        req.query?.eventId || req.body?.eventId || req.body?.payload?.eventId;
+        req.query?.eventId || req.query?.event?.id || req.body?.eventId || req.body?.payload?.eventId;
 
     const clubId = currentUser.clubId;
-
     try {
         const event = await getEventByEventIdnClubId({
             eventId,
@@ -69,6 +68,7 @@ const isAdminEventAuthor = async (req, res, next) => {
         }
         next();
     } catch (error) {
+        console.error('Error in isAdminEventAuthor middleware', error);
         return res.status(401).json(new ApiResponse('Invalid request'));
     }
 };

@@ -34,7 +34,7 @@
   const cameraRetryCount = ref(0)
   const maxRetries = 3
 
-  const event = computed(() => store.getters['event/getEventById'](route.params.eventId))
+  const event = computed(() => store.state.event.event)
   const result = reactive({})
   const hasResult = ref(false)
 
@@ -179,6 +179,7 @@
 
   onMounted(async () => {
     try {
+      await store.dispatch('event/setEvent', { eventId: route.params.eventId })
       // Check if we're on a mobile device
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent,
@@ -223,7 +224,6 @@
 <template>
   <v-container
     class="scanner-container"
-    fluid
   >
     <!-- Header Section -->
     <v-row class="mb-4">
@@ -428,7 +428,6 @@
       </v-col>
     </v-row>
 
-    {{ scannerVariant }}
     <!-- Results Section -->
     <v-row v-if="hasResult">
       <v-col
@@ -517,7 +516,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Attendee Details -->
+        <!-- Attendee Details Table -->
         <v-card
           v-else
           class="mb-4"
@@ -540,79 +539,131 @@
             </v-chip>
           </v-card-title>
 
-          <v-card-text class="pa-4">
-            <v-row>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Name</label>
-                  <p class="text-body-1 font-weight-medium">
+          <v-card-text class="pa-0">
+            <!-- Attendee Information Table -->
+            <v-table>
+              <tbody>
+                <tr>
+                  <td class="text-caption text-medium-emphasis font-weight-medium pa-4" style="width: 30%">
+                    Name
+                  </td>
+                  <td class="pa-4">
                     {{
                       [result.firstName, result.lastName].filter(Boolean).join(' ') || result.registrationData?.name || 'N/A'
                     }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Email</label>
-                  <p class="text-body-1 font-weight-medium">
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-caption text-medium-emphasis font-weight-medium pa-4">
+                    Email
+                  </td>
+                  <td class="pa-4">
                     {{ result.email || result.registrationData?.email || 'N/A' }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Phone</label>
-                  <p class="text-body-1 font-weight-medium">
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-caption text-medium-emphasis font-weight-medium pa-4">
+                    Phone
+                  </td>
+                  <td class="pa-4">
                     {{ result.phone || result.registrationData?.phone || 'N/A' }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Ticket</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.ticketTitle }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Check-in Time</label>
-                  <p class="text-body-1 font-weight-medium">
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-caption text-medium-emphasis font-weight-medium pa-4">
+                    Check-in Time
+                  </td>
+                  <td class="pa-4">
                     {{ result.checkinTime ? formatDateTime({input: result.checkinTime}) : 'Pending' }}
-                  </p>
-                </div>
-              </v-col>
-              <v-col
-                cols="12"
-                md="6"
-              >
-                <div class="info-item">
-                  <label class="text-caption text-medium-emphasis">Total Attendees</label>
-                  <p class="text-body-1 font-weight-medium">
-                    {{ result.totalAttendees ?? 'N/A' }}
-                  </p>
-                </div>
-              </v-col>
-            </v-row>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
 
-            <!-- Additional Fields -->
+            <!-- Tickets Information Table -->
+            <v-expand-transition>
+              <div v-if="!event.config.saveAllAttendeesDetails && result.items">
+                <v-divider />
+                <div class="pa-4">
+                  <h4 class="text-subtitle-1 font-weight-medium mb-3">
+                    Tickets Information
+                  </h4>
+
+                  <!-- Group tickets table -->
+                  <v-table v-if="result.items && Array.isArray(result.items)">
+                    <thead>
+                      <tr>
+                        <th class="text-left">Ticket Type</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-right">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(item, index) in result.items"
+                        :key="index"
+                      >
+                        <td class="pa-3">{{ item.title || 'Ticket' }}</td>
+                        <td class="text-center pa-3">{{ item.quantity || 1 }}</td>
+                        <td class="text-right pa-3">
+                          <v-chip
+                            v-if="item.unitPrice && item.unitPrice > 0"
+                            color="primary"
+                            size="small"
+                            variant="outlined"
+                          >
+                            {{ formatPrice(item.unitPrice) }}
+                          </v-chip>
+                          <v-chip
+                            v-else-if="item.unitPrice === 0"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                          >
+                            Free
+                          </v-chip>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </v-table>
+
+                  <!-- Individual ticket table -->
+                  <v-table v-else>
+                    <thead>
+                      <tr>
+                        <th class="text-left">Ticket Type</th>
+                        <th class="text-right">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="pa-3">{{ result.ticketTitle || 'N/A' }}</td>
+                        <td class="text-right pa-3">
+                          <v-chip
+                            v-if="result.ticketPrice && result.ticketPrice > 0"
+                            color="primary"
+                            size="small"
+                            variant="outlined"
+                          >
+                            {{ formatPrice(result.ticketPrice) }}
+                          </v-chip>
+                          <v-chip
+                            v-else-if="result.ticketPrice === 0"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                          >
+                            Free
+                          </v-chip>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </v-table>
+                </div>
+              </div>
+            </v-expand-transition>
+
+            <!-- Additional Fields Table -->
             <v-expand-transition>
               <div
                 v-if="
@@ -620,25 +671,27 @@
                     Object.keys(result.registrationData.others).length > 0
                 "
               >
-                <v-divider class="my-4" />
-                <h4 class="text-subtitle-1 font-weight-medium mb-3">
-                  Additional Information
-                </h4>
-                <v-row>
-                  <v-col
-                    v-for="(value, key) in result.registrationData.others"
-                    :key="key"
-                    cols="12"
-                    md="6"
-                  >
-                    <div class="info-item">
-                      <label class="text-caption text-medium-emphasis">{{ key }}</label>
-                      <p class="text-body-1 font-weight-medium">
-                        {{ value }}
-                      </p>
-                    </div>
-                  </v-col>
-                </v-row>
+                <v-divider />
+                <div class="pa-4">
+                  <h4 class="text-subtitle-1 font-weight-medium mb-3">
+                    Additional Information
+                  </h4>
+                  <v-table>
+                    <tbody>
+                      <tr
+                        v-for="(value, key) in result.registrationData.others"
+                        :key="key"
+                      >
+                        <td class="text-caption text-medium-emphasis font-weight-medium pa-3" style="width: 30%">
+                          {{ key }}
+                        </td>
+                        <td class="pa-3">
+                          {{ value }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </v-table>
+                </div>
               </div>
             </v-expand-transition>
           </v-card-text>

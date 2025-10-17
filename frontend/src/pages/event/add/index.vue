@@ -359,9 +359,9 @@
                 </v-btn>
                 <v-spacer />
                 <v-btn
+                  class="ml-1"
                   color="primary"
                   rounded="xl"
-                  class="ml-1"
                   :size="xs ? 'default' : 'large'"
                   type="submit"
                 >
@@ -450,8 +450,8 @@
           <v-btn
             color="secondary"
             rounded="xl"
-            variant="outlined"
             size="large"
+            variant="outlined"
             @click="configDialog = false"
           >
             Cancel
@@ -459,8 +459,8 @@
           <v-btn
             color="primary"
             rounded="xl"
-            variant="flat"
             size="large"
+            variant="flat"
             @click="saveConfig"
           >
             Save

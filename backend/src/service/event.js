@@ -1,6 +1,6 @@
 const CustomError = require("../model/CustomError");
 const {query} = require("../db");
-const {removeImages, ifSudo} = require("../others/util");
+const {removeImages, ifSudo} = require("../utils/common");
 const {v4: uuidv4} = require("uuid");
 
 // Helper function to generate slug from event name
@@ -364,14 +364,40 @@ exports.getEventByEventIdnClubId = async ({clubId, eventId, currentUser}) => {
     return result.rows[0];
 };
 
-exports.getAllEvents = async ({clubId}) => {
+exports.getAllEvents = async ({
+                                  clubId,
+                                  page = 1,
+                                  itemsPerPage = 6,
+                                  offset = 0,
+                                  fetchTotalCount = false
+                              } = {}) => {
+    // Get total count if requested
+    let totalCount = 0;
+    if (fetchTotalCount) {
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM event
+            WHERE club_id = $1
+        `;
+        const countResult = await query(countSql, [clubId]);
+        totalCount = parseInt(countResult.rows[0].total);
+    }
+
     const sql = `
         SELECT *
         FROM event
         WHERE club_id = $1
-        ORDER BY start_datetime ASC`;
-    const result = await query(sql, [clubId]);
-    return result.rows;
+        ORDER BY start_datetime ASC
+        LIMIT $2 OFFSET $3`;
+    const result = await query(sql, [clubId, itemsPerPage, offset]);
+
+    return {
+        items: result.rows,
+        totalItems: totalCount,
+        page,
+        itemsPerPage,
+        totalPages: Math.ceil(totalCount / itemsPerPage)
+    };
 };
 
 exports.increaseRegistrationCount = async ({eventId}) => {

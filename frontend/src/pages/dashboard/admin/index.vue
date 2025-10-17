@@ -1,5 +1,5 @@
 <script setup>
-  import { computed, onMounted } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
 
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -24,14 +24,27 @@
   const router = useRouter()
 
   const events = computed(() => store.state.event.events)
+  const pagination = computed(() => store.state.event.pagination)
   const currentUser = computed(() => store.getters['auth/getCurrentUser'])
+  const currentPage = ref(1)
+  const itemsPerPage = ref(6)
 
   function deleteEvent (eventId) {
     store.dispatch('event/removeEvent', { eventId, clubId: currentUser.value.clubId })
   }
 
-  async function fetchData () {
-    await store.dispatch('event/setEvents', currentUser.value.clubId)
+  async function fetchData (page = 1) {
+    await store.dispatch('event/setEvents', {
+      clubId: currentUser.value.clubId,
+      page,
+      itemsPerPage: itemsPerPage.value,
+      fetchTotalCount: true,
+    })
+  }
+
+  function onPageChange (page) {
+    currentPage.value = page
+    fetchData(page)
   }
 
   onMounted(async () => {
@@ -92,221 +105,236 @@
     </v-row>
 
     <!-- Events Grid -->
-    <v-row v-if="events.length > 0">
-      <v-col
-        v-for="(item, index) in events"
-        :key="index"
-        cols="12"
-        lg="4"
-        md="6"
-      >
-        <v-card
-          class="event-card"
-          elevation="4"
-          rounded="xl"
+    <template v-if="events && events.length > 0">
+      <v-row>
+        <v-col
+          v-for="(item, index) in events"
+          :key="index"
+          cols="12"
+          lg="4"
+          md="6"
         >
-          <!-- Event Image -->
-          <v-img
-            :aspect-ratio="16 / 9"
-            class="event-image"
-            cover
-            :src="getEventImageUrl(item.banner, item.name)"
+          <v-card
+            class="event-card"
+            elevation="4"
+            rounded="xl"
           >
-            <template #placeholder>
-              <div class="d-flex align-center justify-center fill-height">
-                <v-icon
-                  color="grey-lighten-1"
-                  size="64"
-                >
-                  mdi-calendar
-                </v-icon>
-              </div>
-            </template>
-          </v-img>
-
-          <!-- Event Content -->
-          <v-card-text class="pa-6">
-            <h3 class="text-h5 font-weight-bold mb-3">
-              {{ item.name }}
-            </h3>
-
-            <div class="event-details mb-4">
-              <div class="d-flex align-center mb-2">
-                <v-icon
-                  class="mr-2"
-                  color="primary"
-                  size="23"
-                >
-                  mdi-calendar
-                </v-icon>
-                <span class="text-body-2">
-                  {{ formatEventDates(item) }}
-                </span>
-              </div>
-              <div class="d-flex align-center">
-                <v-icon
-                  class="mr-2"
-                  color="primary"
-                  size="23"
-                >
-                  mdi-map-marker
-                </v-icon>
-                <span class="text-body-2">{{ item.location }}</span>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex flex-wrap gap-3 mb-4">
-              <v-btn
-                class="px-2"
-                color="primary"
-                density="comfortable"
-                prepend-icon="mdi-pencil"
-                rounded="lg"
-                :to="{ name: 'event-edit', params: { eventId: item.id } }"
-                variant="tonal"
-              >
-                Edit
-              </v-btn>
-              <v-btn
-                class="px-2 ml-1"
-                color="success"
-                density="comfortable"
-                prepend-icon="mdi-account-multiple"
-                rounded="lg"
-                :to="{ name: 'event-attendees', params: { eventId: item.id } }"
-                variant="tonal"
-              >
-                Attendees
-              </v-btn>
-              <v-btn
-                class="px-2 ml-1"
-                color="info"
-                density="comfortable"
-                prepend-icon="mdi-ticket"
-                rounded="lg"
-                :to="{ name: 'event-tickets', params: { eventId: item.id } }"
-                variant="tonal"
-              >
-                Tickets
-              </v-btn>
-            </div>
-
-            <!-- Quick Actions Menu -->
-            <v-menu>
-              <template #activator="{ props }">
-                <v-btn
-                  block
-                  class="px-6"
-                  color="primary"
-                  prepend-icon="mdi-dots-horizontal"
-                  rounded="lg"
-                  v-bind="props"
-                  variant="outlined"
-                >
-                  More Actions
-                </v-btn>
+            <!-- Event Image -->
+            <v-img
+              :aspect-ratio="16 / 9"
+              class="event-image"
+              cover
+              :src="getEventImageUrl(item.banner, item.name)"
+            >
+              <template #placeholder>
+                <div class="d-flex align-center justify-center fill-height">
+                  <v-icon
+                    color="grey-lighten-1"
+                    size="64"
+                  >
+                    mdi-calendar
+                  </v-icon>
+                </div>
               </template>
-              <v-list
-                density="compact"
-                width="300"
-              >
-                <v-list-item
-                  prepend-icon="mdi-qrcode"
-                  title="Scanner"
-                  @click="
-                    router.push({
-                      name: 'event-checkin',
-                      params: { eventId: item.id, variant: 'main' },
-                    })
-                  "
-                />
-                <v-list-item
-                  prepend-icon="mdi-web"
-                  title="Registration Page"
-                  @click="
-                    router.push({
-                      name: 'event-landing-slug',
-                      params: { slug: item.slug },
-                    })
-                  "
-                />
-                <v-list-item
-                  prepend-icon="mdi-plus"
-                  title="Import Attendees"
-                  @click="
-                    router.push({ name: 'import', params: { eventId: item.id, variant: 'main' } })
-                  "
-                />
-                <v-list-item
-                  prepend-icon="mdi-cog"
-                  title="Event Configuration"
-                  @click="
-                    router.push({ name: 'event-config', params: { eventId: item.id } })
-                  "
-                />
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-form-select"-->
-                <!--                  title="Form Builder"-->
-                <!--                  @click="router.push({ name: 'form-builder', params: { eventId: item.id } })"-->
-                <!--                />-->
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-qrcode"-->
-                <!--                  title="Voucher Scanner"-->
-                <!--                  @click="-->
-                <!--                    router.push({-->
-                <!--                      name: 'event-checkin',-->
-                <!--                      params: { eventId: item.id, variant: 'voucher' },-->
-                <!--                    })-->
-                <!--                  "-->
-                <!--                />-->
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-counter"-->
-                <!--                  title="Statistics"-->
-                <!--                  @click="router.push({ name: 'statistics', params: { eventId: item.id } })"-->
-                <!--                />-->
-                <!--                                <v-list-item-->
-                <!--                                  prepend-icon="mdi-puzzle"-->
-                <!--                                  title="Vouchers"-->
-                <!--                                  @click="router.push({ name: 'event-extras', params: { eventId: item.id } })"-->
-                <!--                                />-->
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-ticket"-->
-                <!--                  title="Manage Tickets"-->
-                <!--                  @click="router.push({ name: 'event-tickets', params: { eventId: item.id } })"-->
-                <!--                />-->
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-handshake"-->
-                <!--                  title="View Sponsorships"-->
-                <!--                  @click="router.push({ name: 'event-sponsorships', params: { eventId: item.id } })"-->
-                <!--                />-->
-                <!--                <v-list-item-->
-                <!--                  prepend-icon="mdi-package-variant"-->
-                <!--                  title="Sponsorship Packages"-->
-                <!--                  @click="-->
-                <!--                    router.push({-->
-                <!--                      name: 'event-sponsorship-packages',-->
-                <!--                      params: { eventId: item.id },-->
-                <!--                    })-->
-                <!--                  "-->
-                <!--                />-->
-                <v-divider class="my-2" />
-                <confirmation-dialog @confirm="deleteEvent(item.id)">
-                  <template #activator="{ onClick }">
-                    <v-list-item
-                      class="text-error"
-                      prepend-icon="mdi-delete"
-                      title="Delete Event"
-                      @click.stop="onClick"
-                    />
-                  </template>
-                </confirmation-dialog>
-              </v-list>
-            </v-menu>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+            </v-img>
+
+            <!-- Event Content -->
+            <v-card-text class="pa-6">
+              <h3 class="text-h5 font-weight-bold mb-3">
+                {{ item.name }}
+              </h3>
+
+              <div class="event-details mb-4">
+                <div class="d-flex align-center mb-2">
+                  <v-icon
+                    class="mr-2"
+                    color="primary"
+                    size="23"
+                  >
+                    mdi-calendar
+                  </v-icon>
+                  <span class="text-body-2">
+                    {{ formatEventDates(item) }}
+                  </span>
+                </div>
+                <div class="d-flex align-center">
+                  <v-icon
+                    class="mr-2"
+                    color="primary"
+                    size="23"
+                  >
+                    mdi-map-marker
+                  </v-icon>
+                  <span class="text-body-2">{{ item.location }}</span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="d-flex flex-wrap gap-3 mb-4">
+                <v-btn
+                  class="px-2"
+                  color="primary"
+                  density="comfortable"
+                  prepend-icon="mdi-pencil"
+                  rounded="lg"
+                  :to="{ name: 'event-edit', params: { eventId: item.id } }"
+                  variant="tonal"
+                >
+                  Edit
+                </v-btn>
+                <v-btn
+                  class="px-2 ml-1"
+                  color="success"
+                  density="comfortable"
+                  prepend-icon="mdi-account-multiple"
+                  rounded="lg"
+                  :to="{ name: 'event-attendees', params: { eventId: item.id } }"
+                  variant="tonal"
+                >
+                  Attendees
+                </v-btn>
+                <v-btn
+                  class="px-2 ml-1"
+                  color="info"
+                  density="comfortable"
+                  prepend-icon="mdi-ticket"
+                  rounded="lg"
+                  :to="{ name: 'event-tickets', params: { eventId: item.id } }"
+                  variant="tonal"
+                >
+                  Tickets
+                </v-btn>
+              </div>
+
+              <!-- Quick Actions Menu -->
+              <v-menu>
+                <template #activator="{ props }">
+                  <v-btn
+                    block
+                    class="px-6"
+                    color="primary"
+                    prepend-icon="mdi-dots-horizontal"
+                    rounded="lg"
+                    v-bind="props"
+                    variant="outlined"
+                  >
+                    More Actions
+                  </v-btn>
+                </template>
+                <v-list
+                  density="compact"
+                  width="300"
+                >
+                  <v-list-item
+                    prepend-icon="mdi-qrcode"
+                    title="Scanner"
+                    @click="
+                      router.push({
+                        name: 'event-checkin',
+                        params: { eventId: item.id, variant: 'main' },
+                      })
+                    "
+                  />
+                  <v-list-item
+                    prepend-icon="mdi-web"
+                    title="Registration Page"
+                    @click="
+                      router.push({
+                        name: 'event-landing-slug',
+                        params: { slug: item.slug },
+                      })
+                    "
+                  />
+                  <v-list-item
+                    prepend-icon="mdi-plus"
+                    title="Import Attendees"
+                    @click="
+                      router.push({ name: 'import', params: { eventId: item.id, variant: 'main' } })
+                    "
+                  />
+                  <v-list-item
+                    prepend-icon="mdi-cog"
+                    title="Event Configuration"
+                    @click="
+                      router.push({ name: 'event-config', params: { eventId: item.id } })
+                    "
+                  />
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-form-select"-->
+                  <!--                  title="Form Builder"-->
+                  <!--                  @click="router.push({ name: 'form-builder', params: { eventId: item.id } })"-->
+                  <!--                />-->
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-qrcode"-->
+                  <!--                  title="Voucher Scanner"-->
+                  <!--                  @click="-->
+                  <!--                    router.push({-->
+                  <!--                      name: 'event-checkin',-->
+                  <!--                      params: { eventId: item.id, variant: 'voucher' },-->
+                  <!--                    })-->
+                  <!--                  "-->
+                  <!--                />-->
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-counter"-->
+                  <!--                  title="Statistics"-->
+                  <!--                  @click="router.push({ name: 'statistics', params: { eventId: item.id } })"-->
+                  <!--                />-->
+                  <!--                                <v-list-item-->
+                  <!--                                  prepend-icon="mdi-puzzle"-->
+                  <!--                                  title="Vouchers"-->
+                  <!--                                  @click="router.push({ name: 'event-extras', params: { eventId: item.id } })"-->
+                  <!--                                />-->
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-ticket"-->
+                  <!--                  title="Manage Tickets"-->
+                  <!--                  @click="router.push({ name: 'event-tickets', params: { eventId: item.id } })"-->
+                  <!--                />-->
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-handshake"-->
+                  <!--                  title="View Sponsorships"-->
+                  <!--                  @click="router.push({ name: 'event-sponsorships', params: { eventId: item.id } })"-->
+                  <!--                />-->
+                  <!--                <v-list-item-->
+                  <!--                  prepend-icon="mdi-package-variant"-->
+                  <!--                  title="Sponsorship Packages"-->
+                  <!--                  @click="-->
+                  <!--                    router.push({-->
+                  <!--                      name: 'event-sponsorship-packages',-->
+                  <!--                      params: { eventId: item.id },-->
+                  <!--                    })-->
+                  <!--                  "-->
+                  <!--                />-->
+                  <v-divider class="my-2" />
+                  <confirmation-dialog @confirm="deleteEvent(item.id)">
+                    <template #activator="{ onClick }">
+                      <v-list-item
+                        class="text-error"
+                        prepend-icon="mdi-delete"
+                        title="Delete Event"
+                        @click.stop="onClick"
+                      />
+                    </template>
+                  </confirmation-dialog>
+                </v-list>
+              </v-menu>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Pagination -->
+      <div
+        v-if="pagination.totalPages > 1"
+        class="pagination-container"
+      >
+        <v-pagination
+          v-model="currentPage"
+          :length="pagination.totalPages"
+          :total-visible="7"
+          @update:model-value="onPageChange"
+        />
+      </div>
+    </template>
 
     <!-- Empty State -->
     <v-row v-else>
@@ -377,6 +405,18 @@
   border-radius: 16px;
   max-width: 500px;
   margin: 0 auto;
+}
+
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  padding: 20px 0;
+}
+
+.pagination-container .v-pagination {
+  background: transparent;
 }
 
 /* Responsive Design */
