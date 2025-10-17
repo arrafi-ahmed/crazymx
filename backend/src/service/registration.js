@@ -745,8 +745,7 @@ exports.scanByExtrasPurchaseId = async ({qrCodeData, eventId}) => {
 exports.downloadAttendees = async ({eventId}) => {
     // For download, we need all attendees without pagination
     // First get the event to pass to getAttendees
-    const eventService = require('./event');
-    const event = await eventService.getEvent({eventId});
+    const event = await eventService.getEventById({eventId});
 
     const attendeesResult = await exports.getAttendees({
         event,
