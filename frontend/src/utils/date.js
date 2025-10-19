@@ -134,17 +134,18 @@ export function formatEventDateDisplay ({ event, eventConfig = {} } = {}) {
     return 'Date TBA'
   }
 
-  const start = event.startDatetime || event.startDate || event.start_datetime
-  const end = event.endDatetime || event.endDate || event.end_datetime
+  const start = event.startDatetime || event.startDate
+  const end = event.endDatetime || event.endDate
   const isAllDay = eventConfig?.isAllDay || event?.config?.isAllDay
   const isSingleDay = eventConfig?.isSingleDayEvent || event?.config?.isSingleDayEvent
+  const showEndTime = eventConfig?.showEndTime !== false && event?.config?.showEndTime !== false
 
   if (!start && !end) {
     return 'Date TBA'
   }
 
   // Special case: Single day event but NOT all-day (show date + time range)
-  if (isSingleDay && !isAllDay && start && end) {
+  if (isSingleDay && !isAllDay && start && end && showEndTime) {
     const dateFormat = eventConfig?.dateFormat || event?.config?.dateFormat || 'MM/DD/YYYY HH:mm'
     // Remove time part from format for the date
     const dateOnlyFormat = dateFormat.replace(/ HH:mm|HH:mm/g, '')
@@ -153,6 +154,19 @@ export function formatEventDateDisplay ({ event, eventConfig = {} } = {}) {
     const timeRange = formatTimeRange({ start, end, eventConfig })
 
     return `${formattedDate} ${timeRange}`
+  }
+
+  // Special case: Single day event but NOT all-day (show date + start time only)
+  if (isSingleDay && !isAllDay && start && end && !showEndTime) {
+    const dateFormat = eventConfig?.dateFormat || event?.config?.dateFormat || 'MM/DD/YYYY HH:mm'
+    // Remove time part from format for the date
+    const dateOnlyFormat = dateFormat.replace(/ HH:mm|HH:mm/g, '')
+    const timeFormat = dateFormat.includes('HH:mm') ? 'HH:mm' : 'HH:mm'
+
+    const formattedDate = formatDate({ input: start, format: dateOnlyFormat })
+    const startTime = formatDate({ input: start, format: timeFormat })
+
+    return `${formattedDate} ${startTime}`
   }
 
   // If it's an all-day event, only show the date part
@@ -189,7 +203,13 @@ export function formatEventDateDisplay ({ event, eventConfig = {} } = {}) {
     if (sameDay || isSingleDay) {
       return formatEventDate({ input: start, eventConfig })
     }
-    return `${formatEventDate({ input: start, eventConfig })} - ${formatEventDate({ input: end, eventConfig })}`
+    
+    // For multi-day events, respect showEndTime setting
+    if (showEndTime) {
+      return `${formatEventDate({ input: start, eventConfig })} - ${formatEventDate({ input: end, eventConfig })}`
+    } else {
+      return formatEventDate({ input: start, eventConfig })
+    }
   }
 
   return formatEventDate({ input: start, eventConfig })

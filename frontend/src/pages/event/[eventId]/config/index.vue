@@ -199,6 +199,17 @@
                 persistent-hint
               />
 
+              <v-switch
+                v-model="config.showEndTime"
+                class="mb-4"
+                color="primary"
+                glow
+                hint="When enabled, the event end time will be displayed on customer-facing pages."
+                inset
+                label="Show End Time"
+                persistent-hint
+              />
+
               <v-select
                 v-model="config.dateFormat"
                 class="mb-4"

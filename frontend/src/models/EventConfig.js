@@ -5,6 +5,7 @@ export class EventConfig {
     this.maxTicketsPerRegistration = data.maxTicketsPerRegistration ?? 2
     this.saveAllAttendeesDetails = data.saveAllAttendeesDetails ?? false
     this.dateFormat = data.dateFormat ?? 'MM/DD/YYYY HH:mm'
+    this.showEndTime = data.showEndTime ?? false
   }
 
   toJSON () {
@@ -14,6 +15,7 @@ export class EventConfig {
       maxTicketsPerRegistration: this.maxTicketsPerRegistration,
       saveAllAttendeesDetails: this.saveAllAttendeesDetails,
       dateFormat: this.dateFormat,
+      showEndTime: this.showEndTime,
     }
   }
 }
